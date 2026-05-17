@@ -4,7 +4,7 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Cookie
 
 from app.core.config import settings
 from app.core.security import (
@@ -87,8 +87,13 @@ async def login(payload: LoginRequest, response: Response):
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(payload: RefreshRequest):
-    token = payload.refresh_token
+async def refresh(refresh_token: str | None = Cookie(None)):
+    token = refresh_token
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token missing",
+        )
     decoded = decode_token(token)
 
     if decoded is None or decoded.get("type") != "refresh":
@@ -139,8 +144,9 @@ async def refresh(payload: RefreshRequest):
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(payload: RefreshRequest, response: Response):
-    token_hash = _hash_token(payload.refresh_token)
+async def logout(response: Response, refresh_token: str | None = Cookie(None)):
+    if refresh_token:
+        token_hash = _hash_token(refresh_token)
     async with acquire() as conn:
         await conn.execute(
             "UPDATE dashboard.refresh_tokens SET revoked = TRUE WHERE token_hash = $1",

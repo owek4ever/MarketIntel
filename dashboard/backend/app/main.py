@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.pool import close_pool, init_pool
 from app.services.scraper_client import close_scraper_client, init_scraper_client
-from app.routers import auth, competitors, seo, performance, social, market, crawl, analytics
+from app.routers import auth, competitors, seo, performance, social, market, crawl, analytics, reports
 
 
 @asynccontextmanager
@@ -47,6 +47,7 @@ app.include_router(social.router,      prefix=PREFIX)
 app.include_router(market.router,      prefix=PREFIX)
 app.include_router(crawl.router,       prefix=PREFIX)
 app.include_router(analytics.router,   prefix=PREFIX)
+app.include_router(reports.router,     prefix=PREFIX)
 
 
 @app.get("/health", tags=["system"])
