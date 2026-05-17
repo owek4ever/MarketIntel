@@ -1,0 +1,2920 @@
+{
+  "name": "PFE: Social Media Scrape Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e1866eea-a30c-4eee-8ec5-61a2ced4f02b",
+              "leftValue": "={{ $json.result }}",
+              "rightValue": "crawl",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4496,
+        752
+      ],
+      "id": "e524e274-b7f0-4ed2-ba40-1b9be7c96a21",
+      "name": "If not registered",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crawl_result",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -5376,
+        880
+      ],
+      "id": "6c4e3ad4-d385-4489-af4e-2c0158e44ddd",
+      "name": "Sitemap/homepage Result Webhook",
+      "webhookId": "7b7de794-1028-4441-9fa9-25b853dca7a2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.222:8080/frontier/urls/batch",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "urls",
+              "value": "={{ [...$('Sitemap/homepage Result Webhook').item.json.body.result.homepage_urls.category, ...$('Sitemap/homepage Result Webhook').item.json.body.result.homepage_urls.other, ...$('Sitemap/homepage Result Webhook').item.json.body.result.homepage_urls.product].map((url) => ({ \"url\": url})) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -4496,
+        944
+      ],
+      "id": "e14d2f30-ca17-4705-9b32-23bdc18ea725",
+      "name": "Queue homepage urls",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "zadd",
+        "sortedSet": "frontier:processed_domains",
+        "scoreMembers": "={{ $json.cardinality + 1 }} {{ $('Sitemap/homepage Result Webhook').item.json.body.result.domain }}"
+      },
+      "type": "@vicenterusso/n8n-nodes-redis-enhanced.redisEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -4096,
+        624
+      ],
+      "id": "3c226432-9456-47cf-9d89-c2cb20003ace",
+      "name": "Append new domain",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "zcard",
+        "sortedSet": "frontier:processed_domains"
+      },
+      "type": "@vicenterusso/n8n-nodes-redis-enhanced.redisEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -4256,
+        624
+      ],
+      "id": "bf54b525-f20c-4047-9e2b-758ce203d21b",
+      "name": "get next ID",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "competitors",
+          "mode": "list",
+          "cachedResultName": "competitors"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "domain": "={{ $('Sitemap/homepage Result Webhook').item.json.body.result.domain }}",
+            "name": "={{ (() => {\n if ( $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.hasOpenGraph) {\nreturn $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.openGraphTags['og:site_name']\n }\n \n})() }}",
+            "metadata": "={\n  \"open_graph_tags\": {{ $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.openGraphTags.toJsonString() }},\n  \"search_intent\": \"{{ $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.searchIntent }}\",\n  \"meta_description\": \"{{ $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.metaDescription }}\"\n}",
+            "id": "={{ $('get next ID').item.json.cardinality +1 }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "metadata",
+              "displayName": "metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "outputColumns": [
+            "id"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -3936,
+        624
+      ],
+      "id": "ab676b31-4519-423d-98a9-ca78ff83a9d9",
+      "name": "Insert domain (competitor)",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aeb6e0c8-7779-4dca-99e5-1ff0f57a2abd",
+              "leftValue": "={{ $json.instagram }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3184,
+        688
+      ],
+      "id": "2e5522cf-d1a0-42e3-ba2a-d54de8c5cbc3",
+      "name": "If has instagram link"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e4719121-dc7b-4ef2-9aa7-a6f46e829132",
+              "leftValue": "={{ $json.facebook }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3184,
+        416
+      ],
+      "id": "33c0ec61-c498-472d-8cd2-817c75f57fc2",
+      "name": "If has facebook link"
+    },
+    {
+      "parameters": {
+        "operation": "eval",
+        "script": "local score = redis.call('ZSCORE', KEYS[1], ARGV[1])\n\nreturn score",
+        "keys": "frontier:processed_domains",
+        "args": "={{ $json.domain }}"
+      },
+      "type": "@vicenterusso/n8n-nodes-redis-enhanced.redisEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -4848,
+        880
+      ],
+      "id": "1e8e8879-088c-4f0d-b974-24da7d49b4c4",
+      "name": "Get domain ID3",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fa06aa3c-f4c7-45bd-88a0-1d507841101b",
+              "name": "facebook",
+              "value": "={{ $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.externalLinks.find(item => item.includes(\"facebook.com\")) }}",
+              "type": "string"
+            },
+            {
+              "id": "e7aff3df-6722-4a01-9916-cab556ec7751",
+              "name": "instagram",
+              "value": "={{ $('Sitemap/homepage Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.externalLinks.find(item => /https:\\/\\/www.instagram.com\\/[a-zA-Z0-9\\-\\_\\.]{2,}\\//.test(item)) }}",
+              "type": "string"
+            },
+            {
+              "id": "e6080fbe-6efb-4ad7-bd89-dc9959fa48cc",
+              "name": "competitor_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3776,
+        624
+      ],
+      "id": "a49191e9-71cd-48e7-9026-9cb455fbec91",
+      "name": "Extract external urls",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.scrapecreators.com/v1/facebook/profile",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $json.facebook }}"
+            },
+            {
+              "name": "get_business_hours",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2912,
+        320
+      ],
+      "id": "425c2fa7-35c8-4379-ad38-25c9888b737c",
+      "name": "Scrape Facebook profile",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Kd6Vdk2QGzzeeFHR",
+          "name": "ScrapeCreators API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6ebc10f5-0962-4af8-9502-d05fe4882192",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "79b36cb5-cf9f-45ca-8c87-7e38c278c5e5",
+              "leftValue": "={{ $json.account_status }}",
+              "rightValue": "=private",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2736,
+        320
+      ],
+      "id": "2222f573-4c6d-4096-8701-ff914916fe8e",
+      "name": "If successful",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.scrapecreators.com/v1/facebook/profile/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('If has facebook link').item.json.facebook }}"
+            },
+            {
+              "name": "cursor",
+              "value": "={{ $json.cursor ?? \"\" }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1136,
+        128
+      ],
+      "id": "eb812dcd-d948-4891-99b5-301480807787",
+      "name": "Scrape facebook posts",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Kd6Vdk2QGzzeeFHR",
+          "name": "ScrapeCreators API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6ebc10f5-0962-4af8-9502-d05fe4882192",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2576,
+        672
+      ],
+      "id": "e8c0d50b-eae8-42c7-8b2e-a8b51ec86574",
+      "name": "If successful1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.scrapecreators.com/v1/instagram/profile",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "handle",
+              "value": "={{ $json.handle }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2752,
+        672
+      ],
+      "id": "39a56151-f967-46b7-9679-00f12d1ed444",
+      "name": "Scrape Instagram profile",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Kd6Vdk2QGzzeeFHR",
+          "name": "ScrapeCreators API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.scrapecreators.com/v2/instagram/user/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "handle",
+              "value": "={{ $('Extract page id').item.json.handle }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1376,
+        672
+      ],
+      "id": "4e0bda98-3c4a-47c6-b3c2-76436c22f4d8",
+      "name": "Scrape Instagram posts",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Kd6Vdk2QGzzeeFHR",
+          "name": "ScrapeCreators API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO social_account_links (account_id, url, title, link_type)\nVALUES\n    {{ $('If successful1').item.json.data.user.bio_links.map((bioLink) => {\n        return `(${$json.id}, '${bioLink.url}', '${bioLink.title}', '${bioLink.link_type}')`;\n    }).join(\",\") }}\nON CONFLICT (account_id, url) DO NOTHING;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1648,
+        528
+      ],
+      "id": "f21c0f3b-7be4-4579-9ae6-152ca29c8488",
+      "name": "Batch Upsert bio links",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "140dee97-370a-4dfc-b69d-d29d6fb2ad3a",
+              "name": "image_posts",
+              "value": "={{ $('Scrape Instagram posts').item.json.items.filter(item => item.media_type == 1) }}",
+              "type": "array"
+            },
+            {
+              "id": "29668d6f-81ed-4c44-b84f-d9fe633c4ed9",
+              "name": "video_posts",
+              "value": "={{ $('Scrape Instagram posts').item.json.items.filter(item => item.media_type == 2) }}",
+              "type": "array"
+            },
+            {
+              "id": "106c291f-8052-4a2c-a19a-aa69a525da5f",
+              "name": "carousel_posts",
+              "value": "={{ $('Scrape Instagram posts').item.json.items.filter(item => item.media_type == 8) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        672
+      ],
+      "id": "9136a154-2589-42e0-87b5-03caa78d1701",
+      "name": "Classify posts",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_account_metrics",
+          "mode": "list",
+          "cachedResultName": "social_account_metrics"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "account_id": "={{ $json.id }}",
+            "follower_count": "={{ $('If successful1').item.json.data.user.edge_followed_by.count }}",
+            "following_count": "={{ $('If successful1').item.json.data.user.edge_follow.count }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "account_id",
+              "displayName": "account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "follower_count",
+              "displayName": "follower_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "following_count",
+              "displayName": "following_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "like_count",
+              "displayName": "like_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "snapshot_time",
+              "displayName": "snapshot_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2128,
+        656
+      ],
+      "id": "c8b991cc-8c8d-4357-b904-9a2d1a251869",
+      "name": "Append social account snapshot",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO social_posts (\n  account_id, \n  platform, \n  external_post_id, \n  text, \n  post_url, \n  content_type,\n  publish_time, \n  like_count, \n  comment_count\n) VALUES \n  {{ $('Scrape Instagram posts').item.json.items.map(item => {\n  const escapeSql = (str) => {\n      if (!str) return 'NULL';\n      return `'${String(str).replace(/'/g, \"''\")}'`;\n    };\n  const dateObject = new Date(item?.taken_at * 1000).toISOString();\n  const contentType = item?.media_type == 1 ? \"image\" : item?.media_type == 2 ? \"video\" : \"carousel\";\n  let sql = `(${$('Upsert Instagram Account').item.json.id},'instagram', '${item.strong_id__ || item.id}', ${escapeSql(item.caption.text)}, ${escapeSql(item.url)}, '${contentType}', '${dateObject}', ${item.like_count}, ${item.comment_count})`;\n  return sql;\n  }).join(\",\")\n}}\nON CONFLICT (platform, external_post_id) \nDO UPDATE SET\n  like_count = EXCLUDED.like_count,\n  comment_count = EXCLUDED.comment_count,\n  updated_at = NOW();\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1184,
+        672
+      ],
+      "id": "32a30cd0-a71a-4fda-807c-d79326db67fa",
+      "name": "Batch Upsert posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO social_post_metrics (\n  external_post_id,  \n  like_count, \n  comment_count\n) VALUES \n  {{ $('Scrape Instagram posts').item.json.items.map(item => {\n  let sql = `('${item.strong_id__ || item.id}', ${item.like_count}, ${item.comment_count})`;\n  return sql;\n  }).join(\",\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -992,
+        672
+      ],
+      "id": "f06c5349-c599-41d6-8e01-3596565daa34",
+      "name": "Batch insert posts snapshot",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO instagram_posts (\n  external_post_id,\n  code,\n  device_timestamp,\n  taken_at,\n  media_type,\n  media_url,\n  thumbnail_url,\n  original_width,\n  original_height,\n  music_metadata,\n  caption,\n  caption_metadata,\n  accessibility_caption,\n  product_type,\n  subscribe_cta_visible,\n  is_paid_partnership,\n  can_viewer_save,\n  can_viewer_reshare,\n  has_audio,\n  audio_metadata,\n  location_metadata,\n  user_tags\n) VALUES \n  {{ $json.image_posts.map(item => {\n    const escapeSql = (str) => {\n      if (typeof str === 'string') return `'${str.replace(/'/g, \"''\")}'`;\n      if (typeof str === 'number' || typeof str === 'boolean') return str;\n      if (typeof str === 'object' && str !== null) return `'${JSON.stringify(str).replace(/'/g, \"''\")}'::JSONB`;\n      return 'NULL';\n    };\n\n    let sql = `(\n      '${item.strong_id__ || item.id}',\n      ${escapeSql(item.code)}, \n      ${escapeSql(item.taken_at)}, \n      ${escapeSql(item.taken_at)}, \n      ${escapeSql(item.media_type)}, \n      ${escapeSql(item.url)}, \n      ${escapeSql(item.display_uri)}, \n      ${escapeSql(item.original_width)}, \n      ${escapeSql(item.original_height)}, \n      ${escapeSql(item.music_metadata)}, \n      ${escapeSql(item.caption.text)}, \n      ${escapeSql(item.caption)}, \n      ${escapeSql(item.accessibility_caption)}, \n      ${escapeSql(item.product_type)}, \n      ${escapeSql(item.subscribe_cta_visible)}, \n      ${escapeSql(item.is_paid_partnership)}, \n      ${escapeSql(item.can_viewer_save)}, \n      ${escapeSql(item.can_viewer_reshare)}, \n      ${escapeSql(item.has_audio ?? false)}, \n      ${escapeSql(item.has_audio ? item.music_metadata : null)},\n      ${escapeSql(item.locations)},\n      ${escapeSql(item.user_tags)}\n    )`;\n    return sql;\n  }).join(\",\") }}\nON CONFLICT (external_post_id) \nDO UPDATE SET\n  thumbnail_url = EXCLUDED.thumbnail_url,\n  original_width = EXCLUDED.original_width,\n  original_height = EXCLUDED.original_height,\n  music_metadata = EXCLUDED.music_metadata,\n  caption = EXCLUDED.caption,\n  caption_metadata = EXCLUDED.caption_metadata,\n  accessibility_caption = EXCLUDED.accessibility_caption,\n  product_type = EXCLUDED.product_type,\n  subscribe_cta_visible = EXCLUDED.subscribe_cta_visible,\n  is_paid_partnership = EXCLUDED.is_paid_partnership,\n  can_viewer_save = EXCLUDED.can_viewer_save,\n  can_viewer_reshare = EXCLUDED.can_viewer_reshare,\n  has_audio = EXCLUDED.has_audio,\n  audio_metadata = EXCLUDED.audio_metadata,\n  location_metadata = EXCLUDED.location_metadata,\n  user_tags = EXCLUDED.user_tags,\n  updated_at = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -208,
+        432
+      ],
+      "id": "1fb92cc6-1177-4458-beb6-a83c68bd9ed8",
+      "name": "Batch Upsert image posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO instagram_posts (\n  external_post_id, \n  code, \n  -- device_timestamp,\n  device_timestamp,\n  taken_at, \n  media_type, \n  media_url, \n  thumbnail_url, \n  original_width, \n  original_height, \n  music_metadata, \n  caption, \n  caption_metadata, \n  accessibility_caption, \n  product_type, \n  subscribe_cta_visible, \n  is_paid_partnership, \n  can_viewer_save, \n  can_viewer_reshare, \n  media_language, \n  has_audio, \n  audio_metadata, \n  location_metadata, \n  play_count, \n  video_duration_ms,\n  user_tags\n) VALUES \n  {{ $json.video_posts.map(item => {\n    const escapeSql = (str) => {\n      if (typeof str === 'string') return `'${str.replace(/'/g, \"''\")}'`;\n      if (typeof str === 'number' || typeof str === 'boolean') return str;\n      if (typeof str === 'object' && str !== null) return `'${JSON.stringify(str).replace(/'/g, \"''\")}'::JSONB`;\n      return 'NULL';\n    };\n\n    let sql = `(\n      '${item.strong_id__ || item.id}',\n      ${escapeSql(item.code)}, \n      ${escapeSql(item.taken_at)}, \n      ${escapeSql(item.taken_at)}, \n      ${escapeSql(item.media_type)}, \n      ${escapeSql(item.url)}, \n      ${escapeSql(item.display_uri)}, \n      ${escapeSql(item.original_width)}, \n      ${escapeSql(item.original_height)}, \n      ${escapeSql(item.music_metadata)}, \n      ${escapeSql(item.caption.text)}, \n      ${escapeSql(item.caption)}, \n      ${escapeSql(item.accessibility_caption)}, \n      ${escapeSql(item.product_type)}, \n      ${escapeSql(item.subscribe_cta_visible)}, \n      ${escapeSql(item.is_paid_partnership)}, \n      ${escapeSql(item.can_viewer_save)}, \n      ${escapeSql(item.can_viewer_reshare)}, \n      ${escapeSql(item.original_lang_for_translations)},\n      ${escapeSql(item.has_audio ?? false)}, \n      ${escapeSql(item.has_audio ? item.music_metadata : null)},\n      ${escapeSql(item.location)},\n      ${escapeSql(item.play_count)},\n      ${escapeSql(item.video_duration)},\n      ${escapeSql(item.user_tags)}\n    )`;\n    return sql;\n  }).join(\",\") }}\nON CONFLICT (external_post_id) \nDO UPDATE SET\n  media_type = EXCLUDED.media_type,\n  thumbnail_url = EXCLUDED.thumbnail_url,\n  original_width = EXCLUDED.original_width,\n  original_height = EXCLUDED.original_height,\n  music_metadata = EXCLUDED.music_metadata,\n  caption = EXCLUDED.caption,\n  caption_metadata = EXCLUDED.caption_metadata,\n  accessibility_caption = EXCLUDED.accessibility_caption,\n  product_type = EXCLUDED.product_type,\n  subscribe_cta_visible = EXCLUDED.subscribe_cta_visible,\n  is_paid_partnership = EXCLUDED.is_paid_partnership,\n  can_viewer_save = EXCLUDED.can_viewer_save,\n  can_viewer_reshare = EXCLUDED.can_viewer_reshare,\n  media_language = EXCLUDED.media_language,\n  has_audio = EXCLUDED.has_audio,\n  audio_metadata = EXCLUDED.audio_metadata,\n  play_count = EXCLUDED.play_count,\n  video_duration_ms = EXCLUDED.video_duration_ms,\n  user_tags = EXCLUDED.user_tags,\n  updated_at = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -208,
+        624
+      ],
+      "id": "2908c311-c1a0-4556-8724-6ea881f2e898",
+      "name": "Batch Upsert video posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO instagram_posts (\nexternal_post_id, \n  code, \n  device_timestamp, \n  taken_at, \n  media_type, \n  media_url, \n  thumbnail_url, \n  original_width, \n  original_height, \n  music_metadata, \n  caption, \n  caption_metadata, \n  accessibility_caption, \n  product_type, \n  subscribe_cta_visible, \n  is_paid_partnership, \n  can_viewer_save, \n  can_viewer_reshare, \n  media_language, \n  has_audio, \n  audio_metadata, \n  location_metadata, \n  play_count, \n  video_duration_ms,\n  user_tags\n) VALUES \n  {{ $json.carousel_posts.map(item => {\n    const escapeSql = (str) => {\n      if (typeof str === 'string') return `'${str.replace(/'/g, \"''\")}'`;\n      if (typeof str === 'number' || typeof str === 'boolean') return str;\n      if (typeof str === 'object' && str !== null) return `'${JSON.stringify(str).replace(/'/g, \"''\")}'::JSONB`;\n      return 'NULL';\n    };\n\n    let sql = `(\n      '${item.strong_id__ || item.id}',\n      ${escapeSql(item.code)}, \n      ${escapeSql(item.taken_at)}, \n      ${escapeSql(item.taken_at)}, \n      ${escapeSql(item.media_type)}, \n      ${escapeSql(item.url)}, \n      ${escapeSql(item.display_uri)}, \n      ${escapeSql(item.original_width)}, \n      ${escapeSql(item.original_height)}, \n      ${escapeSql(item.music_metadata)}, \n      ${escapeSql(item.caption.text)}, \n      ${escapeSql(item.caption)}, \n      ${escapeSql(item.accessibility_caption)}, \n      ${escapeSql(item.product_type)}, \n      ${escapeSql(item.subscribe_cta_visible)}, \n      ${escapeSql(item.is_paid_partnership)}, \n      ${escapeSql(item.can_viewer_save)}, \n      ${escapeSql(item.can_viewer_reshare)}, \n      ${escapeSql(item.original_lang_for_translations)},\n      ${escapeSql(item.has_audio ?? false)}, \n      ${escapeSql(item.has_audio ? item.music_metadata : null)},\n      ${escapeSql(item.location)},\n      ${escapeSql(item.play_count)},\n      ${escapeSql(item.video_duration)},\n      ${escapeSql(item.user_tags)}\n    )`;\n    return sql;\n  }).join(\",\") }}\nON CONFLICT (external_post_id) \nDO UPDATE SET\n  media_type = EXCLUDED.media_type,\n  thumbnail_url = EXCLUDED.thumbnail_url,\n  original_width = EXCLUDED.original_width,\n  original_height = EXCLUDED.original_height,\n  music_metadata = EXCLUDED.music_metadata,\n  caption = EXCLUDED.caption,\n  caption_metadata = EXCLUDED.caption_metadata,\n  accessibility_caption = EXCLUDED.accessibility_caption,\n  product_type = EXCLUDED.product_type,\n  subscribe_cta_visible = EXCLUDED.subscribe_cta_visible,\n  is_paid_partnership = EXCLUDED.is_paid_partnership,\n  can_viewer_save = EXCLUDED.can_viewer_save,\n  can_viewer_reshare = EXCLUDED.can_viewer_reshare,\n  has_audio = EXCLUDED.has_audio,\n  audio_metadata = EXCLUDED.audio_metadata,\n  user_tags = EXCLUDED.user_tags,\n  updated_at = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -208,
+        816
+      ],
+      "id": "9a75486f-426e-4b22-bbf4-79e8c70ff542",
+      "name": "Batch Upsert carousel posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_accounts",
+          "mode": "list",
+          "cachedResultName": "social_accounts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "is_business": "={{ $json.isBusinessPageActive }}",
+            "external_id": "={{ $json.id }}",
+            "platform": "facebook",
+            "display_name": "={{ $json.name }}",
+            "profile_url": "={{ $json.url }}",
+            "profile_image_url": "={{ $json.profilePhoto.url }}",
+            "description": "={{ $json.pageIntro }}",
+            "follower_count": "={{ $json.followerCount }}",
+            "raw_json": "={\n    \"business_hours\": {{ $json.businessHours ? JSON.stringify($json.businessHours) : null }},\n    \"address\": {{ $json.address ? JSON.stringify($json.address) : null }},\n    \"website\": {{ $json.website ? JSON.stringify($json.website) : null }},\n    \"rating\": {{ Number($json.rating) ? Number($json.rating) : -1 }},\n    \"rating_count\": {{ $json.ratingCount || -1 }},\n    \"likes_count\": {{ $json.likeCount || -1 }},\n    \"ad_library\": {{ $json.adLibrary ? JSON.stringify($json.adLibrary) : null }},\n    \"created_at\": {{ $json.creationDate ? $json.creationDate.toJsonString() : \"\\\"\\\"\" }},\n    \"services\": {{ $json.services ? JSON.stringify($json.services) : {}.toJsonString() }}\n}",
+            "category": "={{ $json.category }}",
+            "phone": "={{ $json.phone }}",
+            "email": "={{ $json.email }}",
+            "competitor_id": "={{ $('If competitor id').item.json.competitor_id }}"
+          },
+          "matchingColumns": [
+            "platform",
+            "external_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "competitor_id",
+              "displayName": "competitor_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "options",
+              "canBeUsedToMatch": true,
+              "options": [
+                {
+                  "name": "tiktok",
+                  "value": "tiktok"
+                },
+                {
+                  "name": "instagram",
+                  "value": "instagram"
+                },
+                {
+                  "name": "facebook",
+                  "value": "facebook"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "external_id",
+              "displayName": "external_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "display_name",
+              "displayName": "display_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "profile_url",
+              "displayName": "profile_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile_image_url",
+              "displayName": "profile_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_verified",
+              "displayName": "is_verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "is_business",
+              "displayName": "is_business",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_private",
+              "displayName": "is_private",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "follower_count",
+              "displayName": "follower_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "following_count",
+              "displayName": "following_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "next_crawl_at",
+              "displayName": "next_crawl_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "outputColumns": [
+            "id"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2480,
+        304
+      ],
+      "id": "027990e1-3c9e-4fe5-b8c4-101633415357",
+      "name": "Upsert facebook Account",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_accounts",
+          "mode": "list",
+          "cachedResultName": "social_accounts"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "is_verified": "={{ $json.data.user.is_verified }}",
+            "is_business": "={{ $json.data.user.is_business_account }}",
+            "is_private": "={{ $json.data.user.is_private }}",
+            "external_id": "={{ $json.data.user.id }}",
+            "platform": "instagram",
+            "username": "={{ $json.data.user.username }}",
+            "display_name": "={{ $json.data.user.full_name }}",
+            "profile_url": "={{ $('If has instagram link').item.json.instagram }}",
+            "profile_image_url": "={{ $json.data.user.profile_pic_url }}",
+            "description": "={{ $json.data.user.biography }}",
+            "follower_count": "={{ $json.data.user.edge_followed_by.count }}",
+            "following_count": "={{ $json.data.user.edge_follow.count }}",
+            "raw_json": "={\n    \"business_address\": {{ $json.data.user.business_address_json?.toJsonString() }},\n    \"business_contact_method\": {{ $json.data.user.business_contact_method?.toJsonString() ?? null }},\n    \"fb_profile_bio_link\": {{ $json.data.user.fb_profile_biolink?.toJsonString() ?? \"\".toJsonString() }},\n    \"highlight_reel_count\": {{ $json.data.user.highlight_reel_count }}\n}",
+            "category": "={{ $json.data.user.category_name }}",
+            "phone": "={{ $json.data.user.business_phone_number }}",
+            "email": "={{ $json.data.user.business_email }}",
+            "competitor_id": "={{ $('If competitor id').item.json.competitor_id }}"
+          },
+          "matchingColumns": [
+            "platform",
+            "external_id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "competitor_id",
+              "displayName": "competitor_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "platform",
+              "displayName": "platform",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "options",
+              "canBeUsedToMatch": true,
+              "options": [
+                {
+                  "name": "tiktok",
+                  "value": "tiktok"
+                },
+                {
+                  "name": "instagram",
+                  "value": "instagram"
+                },
+                {
+                  "name": "facebook",
+                  "value": "facebook"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "external_id",
+              "displayName": "external_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "display_name",
+              "displayName": "display_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "profile_url",
+              "displayName": "profile_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "profile_image_url",
+              "displayName": "profile_image_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_verified",
+              "displayName": "is_verified",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_business",
+              "displayName": "is_business",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "is_private",
+              "displayName": "is_private",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "follower_count",
+              "displayName": "follower_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "following_count",
+              "displayName": "following_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "next_crawl_at",
+              "displayName": "next_crawl_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "raw_json",
+              "displayName": "raw_json",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "outputColumns": [
+            "id"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2320,
+        656
+      ],
+      "id": "bcfd2ffa-5088-460c-a9fd-70bb7f704f5f",
+      "name": "Upsert Instagram Account",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_account_metrics",
+          "mode": "list",
+          "cachedResultName": "social_account_metrics"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "account_id": "={{ $json.id }}",
+            "follower_count": "={{ $('If successful').item.json.followerCount }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "account_id",
+              "displayName": "account_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "follower_count",
+              "displayName": "follower_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "following_count",
+              "displayName": "following_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "like_count",
+              "displayName": "like_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "snapshot_time",
+              "displayName": "snapshot_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2288,
+        304
+      ],
+      "id": "9f6ccdf1-6121-4771-8cfb-0a29657dd1bd",
+      "name": "Append facebook account snapshot",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO social_account_links (account_id, url)\nVALUES\n    {{ $('If successful').item.json.links.map((link) => {\n        return `(${$('Upsert facebook Account').item.json.id}, '${link}')`;\n    }).join(\",\") }}\nON CONFLICT (account_id, url) DO NOTHING;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1872,
+        192
+      ],
+      "id": "000d64ed-d86e-4ad6-a53f-cade5c7ff31b",
+      "name": "Batch Upsert facebook bio links",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3c26d393-8bee-439a-8560-7ffbf2ca6308",
+              "leftValue": "={{ Number($json.fetch_count || 0) }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "7667eb48-bd44-4b50-b521-47d02d8dd88e",
+      "name": "If 3 fetches made",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "amount": 0.2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        176
+      ],
+      "id": "ad7c4063-865d-43d9-b21d-520efa9289c2",
+      "name": "Wait",
+      "webhookId": "2ae426b8-a3c6-4ce6-b9fa-a0bf175a839f",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "fetch_count",
+        "key": "=social_media:facebook_fetch_count:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        128
+      ],
+      "id": "c6db6e82-99f2-4ccb-9c4c-9828403949d7",
+      "name": "get fetches count",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=social_media:facebook_fetches_count:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}",
+        "value": "0"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1648,
+        320
+      ],
+      "id": "162888a5-cae1-449e-aa4c-9672fceefae7",
+      "name": "set fetches count",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=social_media:facebook_fetch_count:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "7139b069-86d6-4e24-b3b8-62e015770424",
+      "name": "reset fetches count",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=social_media:facebook_fetch_count:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}",
+        "value": "={{ Number($json.fetch_count) + 1 }}",
+        "keyType": "string"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        176
+      ],
+      "id": "b7c63fbc-cb36-4469-809e-f7afa10c5757",
+      "name": "Update fetches count",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO social_posts (\n  account_id,\n  platform,\n  external_post_id,\n  text,\n  post_url,\n  content_type,\n  publish_time,\n  like_count,\n  comment_count,\n  raw_json\n) VALUES \n  {{ $('Scrape facebook posts').item.json.posts.map(item => {\n    const escapeSql = (val) => {\n      if (val === null || val === undefined) return 'NULL';\n      if (typeof val === 'number' || typeof val === 'boolean') return val;\n      // Escape single quotes for SQL strings\n      return `'${String(val).replace(/'/g, \"''\")}'`;\n    };\n\n    // Logic to determine content type based on the data provided\n    let contentType = 'text';\n    if (item.images && item.images.length > 1) {\n      contentType = 'carousel';\n    } else if (item.images && item.images.length === 1) {\n      contentType = 'image';\n    } else if (item.videoDetails && Object.keys(item.videoDetails).length > 0) {\n      contentType = 'video';\n    }\n\n    // --- IMPORTANT: ACCOUNT_ID LOGIC ---\n    // You must replace 'null' below with the actual Internal ID \n    // from your 'social_accounts' table that corresponds to item.author.id\n    const dbAccountId = $('Upsert facebook Account').item.json.id; \n\n    // Store the ENTIRE item object (images, comments, author, etc.) as a JSON string\n    const otherData = JSON.stringify({\n        \"image\": item.image,\n        \"images\": item.images,\n        \"author\": item.author,\n        \"video_details\": item.videoDetails,\n        \"video_view_count\": item.videoViewCount\n    });\n\n    return `(\n      ${dbAccountId},\n      'facebook',\n      ${escapeSql(item.id)},\n      ${escapeSql(item.text)},\n      ${escapeSql(item.url)},\n      '${contentType}',\n      '${new Date(item.publishTime * 1000).toISOString()}',\n      ${item.reactionCount},\n      ${item.commentCount},\n      ${escapeSql(otherData)} \n    )`;\n  }).join(\",\") }}\nON CONFLICT (platform, external_post_id) \nDO UPDATE SET\n  text = EXCLUDED.text,\n  like_count = EXCLUDED.like_count,\n  comment_count = EXCLUDED.comment_count,\n  view_count = EXCLUDED.view_count,\n  raw_json = EXCLUDED.raw_json,\n  updated_at = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -768,
+        128
+      ],
+      "id": "641e97aa-e668-4b47-92c9-41ba2a189ffd",
+      "name": "Batch Upsert facebook posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO social_post_metrics (\n  external_post_id,  \n  like_count, \n  comment_count\n) VALUES \n  {{ $('Scrape facebook posts').item.json.posts.map(item => {\n  let sql = `('${item.id}', ${item.reactionCount}, ${item.commentCount})`;\n  return sql;\n  }).join(\",\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -576,
+        128
+      ],
+      "id": "c7baf9eb-4853-46d9-94d2-3b64860e713c",
+      "name": "Batch insert facebook posts snapshot",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "890067d1-178f-4b1e-8cdf-1c6304153d57",
+              "leftValue": "={{ $('Scrape Facebook profile').item.json.links }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2080,
+        304
+      ],
+      "id": "85e720b7-db83-4e84-9023-a3b79781f10b",
+      "name": "If",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "=social_media:facebook_cursor:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        160,
+        16
+      ],
+      "id": "71129258-7406-4085-a179-664c8b85d7d8",
+      "name": "reset cursor",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=social_media:facebook_cursor:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}",
+        "value": "={{ $('Scrape facebook posts').item.json.cursor }}",
+        "keyType": "string"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        128
+      ],
+      "id": "f5b9eeb5-519f-42d4-9586-8e9abfe135ad",
+      "name": "set cursor",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "cursor",
+        "key": "=social_media:facebook_cursor:{{ $('Scrape Facebook profile').item.json.url.replace(\"https://\", \"\") }}",
+        "keyType": "string",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        128
+      ],
+      "id": "085f572c-8910-4aa2-b5df-fe9e4525472a",
+      "name": "get cursor",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "60db971b-14df-4c05-bfd4-2dd3f64ec56f",
+              "name": "handle",
+              "value": "={{ $json.instagram.replace(/(https:\\/\\/)?(www.)?instagram.com\\/(p\\/)?/, \"\").replace(/\\?[a-zA-Z0-9\\=\\_]*/, \"\").replace(\"/\", \"\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2944,
+        672
+      ],
+      "id": "766eba21-5982-49d7-8622-531103dff941",
+      "name": "Extract page id",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b08a5239-41b3-4828-8d65-b1fa238117db",
+              "leftValue": "={{ $json.competitor_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3472,
+        576
+      ],
+      "id": "68a16f31-c50c-4a59-b1f3-d46b2f78bc49",
+      "name": "If competitor id"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ccd03526-fff5-4765-a2cc-fa9313814464",
+              "name": "facebook",
+              "value": "={{ $json?.platform == \"facebook\" ? $json.profile_url : null }}",
+              "type": "string"
+            },
+            {
+              "id": "e7ae182e-ee5c-4f27-b80c-a82dca461814",
+              "name": "instagram",
+              "value": "={{ $json?.platform == \"instagram\" ? $json.profile_url : null }}",
+              "type": "string"
+            },
+            {
+              "id": "b894b665-7e2f-4bb4-a097-4d9c51deec77",
+              "name": "competitor_id",
+              "value": "={{ $json?.competitor_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3936,
+        448
+      ],
+      "id": "109194fd-ec31-447c-97c5-b7e307b2ae07",
+      "name": "Extract profile urls",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM social_accounts WHERE NOW() >= next_crawl_at LIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -4096,
+        448
+      ],
+      "id": "6bc0eeee-acfc-4061-aef5-5efa79155cb2",
+      "name": "Get account",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -4256,
+        448
+      ],
+      "id": "e4d2184b-10ea-4463-8e71-6650b0d5e6d5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "scrape_jobs",
+          "mode": "list",
+          "cachedResultName": "scrape_jobs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "url_hash": "={{ $json.body.result.id }}",
+            "url": "={{ $json.body.result.url }}",
+            "domain": "={{ $json.body.result.domain }}",
+            "priority": "={{ $json.body.result.priority }}",
+            "retries": "={{ $json.body.result.retries }}",
+            "status": "={{ $json.body.result.status }}",
+            "queued_at": "={{ DateTime.fromSeconds($json.body.result.queued_at) }}",
+            "started_at": "={{ DateTime.fromSeconds($json.body.result.started_at) }}",
+            "finished_at": "={{ DateTime.fromSeconds($json.body.result.completed_at) }}",
+            "job_type": "={{ $json.body.result.job_type }}",
+            "technical_metadata": "={\n  \"status_code\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer?.httpStatusCode || -1 }},\n  \"dom_size\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.domSize || -1 }},\n  \"page_size\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.htmlPageSize || -1 }},\n  \"dom_interactive\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_interactive || -1 }},\n  \"dom_complete\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_complete || -1 }},\n  \"first_paint\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.first_paint || -1 }},\n  \"resource_count\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.resourceCount || -1 }},\n  \"ttfb\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.siteLoadingSpeedTest.ttfb_seconds  || -1 }}\n}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "url_hash",
+              "displayName": "url_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retries",
+              "displayName": "retries",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "queued_at",
+              "displayName": "queued_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "finished_at",
+              "displayName": "finished_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_type",
+              "displayName": "job_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "technical_metadata",
+              "displayName": "technical_metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5200,
+        880
+      ],
+      "id": "b285213d-c366-4df4-a616-5e611873d2ff",
+      "name": "Append  homepage discovery job",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7b4107f1-f897-4f67-b463-081ecf9b610c",
+              "leftValue": "={{ $('If successful1').item.json.data.user.bio_links }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1920,
+        656
+      ],
+      "id": "7a9ebd17-d9fc-4653-a083-5e675d18623c",
+      "name": "If1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "354427ca-1906-494c-baa7-fa879fd4e3bd",
+              "leftValue": "={{ $json.image_posts }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        512
+      ],
+      "id": "c8451876-94b6-4b9d-ada3-368b197b2fa6",
+      "name": "If contains image posts",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "354427ca-1906-494c-baa7-fa879fd4e3bd",
+              "leftValue": "={{ $json.video_posts }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        672
+      ],
+      "id": "612e4c3c-c4c9-4e5e-b3ed-7921aad10317",
+      "name": "If contains video posts",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "354427ca-1906-494c-baa7-fa879fd4e3bd",
+              "leftValue": "={{ $json.carousel_posts }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -496,
+        864
+      ],
+      "id": "30ec9ffd-0385-4c96-aac7-970f330a3246",
+      "name": "If contains carousel posts",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "REFRESH MATERIALIZED VIEW competitor_social_score",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        16
+      ],
+      "id": "dd0ce74e-9957-4b7f-919b-d3efa17bac0f",
+      "name": "Refresh Competitors Social scores",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "REFRESH MATERIALIZED VIEW competitor_social_score",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        416,
+        624
+      ],
+      "id": "9489d611-cfaf-44d3-ab71-ad2d84b23fa3",
+      "name": "Refresh Competitors Social scores1",
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "numberInputs": 3,
+        "output": "empty"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        208,
+        608
+      ],
+      "id": "0dd5cd74-e64b-44bc-826c-e6319fa2dfa6",
+      "name": "Wait for posts insertion to finish"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If not registered": {
+      "main": [
+        [
+          {
+            "node": "get next ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sitemap/homepage Result Webhook": {
+      "main": [
+        [
+          {
+            "node": "Append  homepage discovery job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append new domain": {
+      "main": [
+        [
+          {
+            "node": "Insert domain (competitor)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get next ID": {
+      "main": [
+        [
+          {
+            "node": "Append new domain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert domain (competitor)": {
+      "main": [
+        [
+          {
+            "node": "Extract external urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If has instagram link": {
+      "main": [
+        [
+          {
+            "node": "Extract page id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If has facebook link": {
+      "main": [
+        [
+          {
+            "node": "Scrape Facebook profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get domain ID3": {
+      "main": [
+        [
+          {
+            "node": "If not registered",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Queue homepage urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract external urls": {
+      "main": [
+        [
+          {
+            "node": "If competitor id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Facebook profile": {
+      "main": [
+        [
+          {
+            "node": "If successful",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If successful": {
+      "main": [
+        [
+          {
+            "node": "Upsert facebook Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape facebook posts": {
+      "main": [
+        [
+          {
+            "node": "set cursor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If successful1": {
+      "main": [
+        [
+          {
+            "node": "Upsert Instagram Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Instagram profile": {
+      "main": [
+        [
+          {
+            "node": "If successful1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Instagram posts": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Upsert bio links": {
+      "main": [
+        [
+          {
+            "node": "Scrape Instagram posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify posts": {
+      "main": [
+        [
+          {
+            "node": "If contains image posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If contains video posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If contains carousel posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append social account snapshot": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Upsert posts": {
+      "main": [
+        [
+          {
+            "node": "Batch insert posts snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch insert posts snapshot": {
+      "main": [
+        [
+          {
+            "node": "Classify posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert facebook Account": {
+      "main": [
+        [
+          {
+            "node": "Append facebook account snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Instagram Account": {
+      "main": [
+        [
+          {
+            "node": "Append social account snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append facebook account snapshot": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Upsert facebook bio links": {
+      "main": [
+        [
+          {
+            "node": "set fetches count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If 3 fetches made": {
+      "main": [
+        [
+          {
+            "node": "reset fetches count",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update fetches count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "get cursor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get fetches count": {
+      "main": [
+        [
+          {
+            "node": "If 3 fetches made",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set fetches count": {
+      "main": [
+        [
+          {
+            "node": "get cursor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reset fetches count": {
+      "main": [
+        [
+          {
+            "node": "reset cursor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update fetches count": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Upsert facebook posts": {
+      "main": [
+        [
+          {
+            "node": "Batch insert facebook posts snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch insert facebook posts snapshot": {
+      "main": [
+        [
+          {
+            "node": "get fetches count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert facebook bio links",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "set fetches count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set cursor": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert facebook posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get cursor": {
+      "main": [
+        [
+          {
+            "node": "Scrape facebook posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract page id": {
+      "main": [
+        [
+          {
+            "node": "Scrape Instagram profile",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If competitor id": {
+      "main": [
+        [
+          {
+            "node": "If has facebook link",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If has instagram link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract profile urls": {
+      "main": [
+        []
+      ]
+    },
+    "Get account": {
+      "main": [
+        [
+          {
+            "node": "Extract profile urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append  homepage discovery job": {
+      "main": [
+        [
+          {
+            "node": "Get domain ID3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert bio links",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Scrape Instagram posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If contains image posts": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert image posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If contains video posts": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert video posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If contains carousel posts": {
+      "main": [
+        [
+          {
+            "node": "Batch Upsert carousel posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reset cursor": {
+      "main": [
+        [
+          {
+            "node": "Refresh Competitors Social scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh Competitors Social scores": {
+      "main": [
+        []
+      ]
+    },
+    "Batch Upsert image posts": {
+      "main": [
+        [
+          {
+            "node": "Wait for posts insertion to finish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Upsert video posts": {
+      "main": [
+        [
+          {
+            "node": "Wait for posts insertion to finish",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Batch Upsert carousel posts": {
+      "main": [
+        [
+          {
+            "node": "Wait for posts insertion to finish",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Refresh Competitors Social scores1": {
+      "main": [
+        []
+      ]
+    },
+    "Wait for posts insertion to finish": {
+      "main": [
+        [
+          {
+            "node": "Refresh Competitors Social scores1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "dd1b34b4-d2ea-4ad5-8460-32c85bcebd5c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "pCzG9qcTsWeDfu9IPuhK0",
+  "tags": []
+}

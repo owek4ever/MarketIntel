@@ -1,0 +1,567 @@
+{
+  "name": "PFE: Add Target Category",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "target-category",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        16
+      ],
+      "id": "c7031ad9-31db-455f-b1d7-70218093b446",
+      "name": "Webhook",
+      "webhookId": "d77b601a-0bb5-449c-8c20-0d9c93de093e",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "72f19dd9-0644-4161-b0a1-529d3c11078f",
+              "name": "parent_category_name",
+              "value": "={{ $json.body.parent_category_name }}",
+              "type": "string"
+            },
+            {
+              "id": "19f3dcc4-bea4-47ac-b45f-94434b503fd3",
+              "name": "category_name",
+              "value": "={{ $json.body.category_name }}",
+              "type": "string"
+            },
+            {
+              "id": "7a0cb1a6-1c1d-4b93-be7a-544121907775",
+              "name": "category_description",
+              "value": "={{ $json.body.category_description }}",
+              "type": "string"
+            },
+            {
+              "id": "793fe765-e5f0-4aae-a58a-f691870d4a90",
+              "name": "category_keywords",
+              "value": "={{ $json.body.category_keywords }}",
+              "type": "string"
+            },
+            {
+              "id": "ecfe929b-1006-4d1c-b16f-2e8b1ee2175a",
+              "name": "relevance_weight",
+              "value": "={{ $json.body.relevance_weight }}",
+              "type": "number"
+            },
+            {
+              "id": "18dc3b4b-8026-49c7-8683-2857594a2cc4",
+              "name": "sample_products",
+              "value": "={{ $json.body.sample_products }}",
+              "type": "array"
+            },
+            {
+              "id": "7cf107d7-6419-4f1c-9fda-172868d60d95",
+              "name": "metadata",
+              "value": "={{ $json.body.metadata }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        16
+      ],
+      "id": "0645cd92-ca70-432a-a112-3e2c2af73a87",
+      "name": "extract body fields",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5ca80e92-588b-40b6-a382-40eab3263d0c",
+              "leftValue": "={{ $json.parent_category_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "384c2e3b-36f4-410d-8d0b-984cbd9686aa",
+      "name": "If parent category param exists",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id\nFROM target_categories\nWHERE normalized_name = unaccent(lower($1));",
+        "options": {
+          "queryReplacement": "={{ $json.parent_category_name }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        656,
+        -128
+      ],
+      "id": "72f558e6-e195-4c3b-bc0b-f33778dfb0b3",
+      "name": "Get parent category ID",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b9f9fe84-8f63-43a7-bb38-d324ca2b69bb",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        -128
+      ],
+      "id": "12d0b72a-bbb4-4281-ab2b-51c442db85e0",
+      "name": "If category does not exists",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "target_categories",
+          "mode": "list",
+          "cachedResultName": "target_categories"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "relevance_weight": "={{ $('extract body fields').item.json.relevance_weight || 1.0 }}",
+            "parent_category_id": "={{ $('extract body fields').item.json.parent_category_id }}",
+            "category_name": "={{ $('extract body fields').item.json.category_name }}",
+            "category_description": "={{ $('extract body fields').item.json.category_description }}",
+            "category_keywords": "={{ $('extract body fields').item.json.category_keywords }}",
+            "metadata": "={{ $('extract body fields').item.json.metadata.toJsonString() }}",
+            "sample_products": "={{ $('extract body fields').item.json.sample_products.join(\";\") }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "parent_category_id",
+              "displayName": "parent_category_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category_name",
+              "displayName": "category_name",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "normalized_name",
+              "displayName": "normalized_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "category_description",
+              "displayName": "category_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category_keywords",
+              "displayName": "category_keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "relevance_weight",
+              "displayName": "relevance_weight",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "is_active",
+              "displayName": "is_active",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "metadata",
+              "displayName": "metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "sample_products",
+              "displayName": "sample_products",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "outputColumns": [
+            "id"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1328,
+        16
+      ],
+      "id": "7834ea45-3789-4f8d-8ad3-e6432c9abbbb",
+      "name": "Insert category",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"inserted_row_id\": {{ $json.id }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1536,
+        16
+      ],
+      "id": "c127d821-11a0-4df3-be09-ea5545c8b546",
+      "name": "Respond with success",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "16faf827-3b2f-44f8-9ff5-a21a18b3897c",
+              "leftValue": "={{ $json.category_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "3d4634e9-7eac-427f-8927-0365c29b12c4",
+              "leftValue": "={{ $json.category_description }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "82b7906f-ff03-4469-838d-060ec18fa763",
+              "leftValue": "={{ $json.category_keywords }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        96,
+        16
+      ],
+      "id": "fed376f2-6360-4642-804c-1c2fb41890ae",
+      "name": "Check necessary fields",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"failed\",\n  \"reason\": \"Request body is missing required fields\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        192
+      ],
+      "id": "9f93cc37-d0a2-494a-ad72-be3ebe7efa02",
+      "name": "Respond with invalid format",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"failed\",\n  \"reason\": \"parent category does not found\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1120,
+        -240
+      ],
+      "id": "4a72c03a-62b1-4561-9854-96e7c17494c4",
+      "name": "Respond invalid parent category name",
+      "executeOnce": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "extract body fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract body fields": {
+      "main": [
+        [
+          {
+            "node": "Check necessary fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If parent category param exists": {
+      "main": [
+        [
+          {
+            "node": "Get parent category ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get parent category ID": {
+      "main": [
+        [
+          {
+            "node": "If category does not exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If category does not exists": {
+      "main": [
+        [
+          {
+            "node": "Respond invalid parent category name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert category": {
+      "main": [
+        [
+          {
+            "node": "Respond with success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check necessary fields": {
+      "main": [
+        [
+          {
+            "node": "If parent category param exists",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with invalid format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "695ba8be-76d4-4004-97ba-efd3452310f7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "gfmJiNaC_2m5MR84Tuqfw",
+  "tags": []
+}

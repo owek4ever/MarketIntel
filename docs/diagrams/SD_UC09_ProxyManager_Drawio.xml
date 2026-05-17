@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1400" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="UC-09: Manage &amp; Route Proxy Traffic — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n Proxy Management" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_sync" value="«Daemon»&#xa;n8n_sync.py sync_loop" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_store" value="«Module»&#xa;ProxyStore" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis»&#xa;proxies:available" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_browser" value="«Playwright»&#xa;BrowserPool Page" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_server" value="«AI Agent»&#xa;Proxy Server :8888" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_upstream" value="«External»&#xa;Upstream Proxy Provider" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1400" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_target" value="«External»&#xa;Target Website" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1620" y="60" width="130" height="1250" as="geometry"/>
+    </mxCell>
+
+    <!-- === PART A: Proxy Sync === -->
+    <mxCell id="partA" value="Part A: Periodic Proxy Sync (every SYNC_INTERVAL_SECONDS)" style="swimlane;startSize=30;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="80" y="120" width="1710" height="320" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: sync_loop() [infinite background daemon]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_sync" target="lf_sync" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="165"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" value="2: GET {N8N_PROXY_URL} [x-api-key header]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_sync" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="195"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: 200 OK [{proxy_address, port, username, password, valid}]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_sync" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="225"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3: store.sync_proxies([proxy_strings])" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_sync" target="lf_store" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="260"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3a" value="3.1: PIPELINE: DEL temp_key → SADD temp_key proxies → RENAME temp_key proxies:available" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_store" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="295"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.2: OK (atomic transaction)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_store" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="325"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" value="4: asyncio.sleep(SYNC_INTERVAL_SECONDS)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_sync" target="lf_sync" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="395"/></mxGeometry>
+    </mxCell>
+
+    <!-- === PART B: Request Routing === -->
+    <mxCell id="partB" value="Part B: Per-Request Proxy Routing (handle_client)" style="swimlane;startSize=30;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="960" y="480" width="810" height="560" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m5" value="5: CONNECT target.com:443 HTTP/1.1 [from Playwright]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_browser" target="lf_server" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="500"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5a" value="5.1: parse domain from CONNECT header" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_server" target="lf_server" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="535"/></mxGeometry>
+    </mxCell>
+
+    <!-- alt: blocked domain -->
+    <mxCell id="alt_block" value="alt [domain in Config.BLOCKED_DOMAINS]" style="swimlane;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="555" width="300" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="m_block" value="→ 403 Forbidden (drop connection)" style="text;html=1;fontSize=10;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1185" y="575" width="290" height="30" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m6" value="6: store.get_best_proxy(domain)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_server" target="lf_store" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="635"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6a" value="6.1: SMEMBERS proxies:available → shuffle → rate check" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_store" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="670"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6b" value="6.2: MGET rate:{proxy}:{domain}:h:{hr} rate:{proxy}:{domain}:d:{day}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_store" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="705"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="6.3: proxy_string (or None)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_store" target="lf_server" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="740"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m7" value="7: open_connection(proxy_host, proxy_port)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_server" target="lf_upstream" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="775"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7a" value="7.1: store.record_usage(proxy, domain) → INCR rate counters" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_server" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="815"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8" value="8: «HTTPS» tunnel: browser ↔ upstream ↔ target (bi-directional stream_copy)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_upstream" target="lf_target" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="855"/></mxGeometry>
+    </mxCell>
+
+    <!-- alt: upstream failure -->
+    <mxCell id="alt_fail" value="alt [open_connection fails]" style="swimlane;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="900" width="400" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="m_fail" value="→ store.report_failure(proxy)&#xa;→ SET failed_proxy:{proxy} 1 EX 600&#xa;→ 502 Bad Gateway" style="text;html=1;fontSize=10;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="1185" y="915" width="390" height="55" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

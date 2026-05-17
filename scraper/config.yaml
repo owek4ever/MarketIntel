@@ -1,0 +1,43 @@
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+  job_queue: "scraper:jobs:pending"
+  working_queue: "scraper:jobs:working"
+  dead_letter_queue: "scraper:jobs:dlq"
+  max_retries: 3
+  timeout_seconds: 360 # Job visibility timeout
+
+worker:
+  concurrency: 3
+  max_pages_per_browser: 5
+  max_memory_mb: 1000
+  heartbeat_interval_sec: 15
+  retry_backoff_sec: 10
+
+frontier:
+  retry_delay_seconds: 30
+  retry_backoff_multiplier: 2.0
+  max_retry_delay_seconds: 300
+  retry_promotion_batch_size: 100
+  max_jobs_per_domain: 10
+  inflight_timeout_seconds: 10
+  seen_urls_ttl_seconds: 259200
+
+browser:
+  headless: true
+  locale: "fr-TN"
+  user_data_dir: null
+  disable_images: true
+  proxy: http://localhost:8888 # "http://user:pass@host:port"
+
+webhook:
+  scrape_started_url: http://192.168.1.222:5678/webhook/scrape_started # "https://your-n8n-instance/webhook/scrape-result"
+  crawl_result_url: http://192.168.1.222:5678/webhook/crawl_result # "https://your-n8n-instance/webhook/scrape-result"
+  product_list_scrape_result_url: http://192.168.1.222:5678/webhook/product_list_scrape_result # "https://your-n8n-instance/webhook/scrape-result"
+  product_scrape_result_url: http://192.168.1.222:5678/webhook/product_scrape_result # "https://your-n8n-instance/webhook/scrape-result"
+  content_scrape_result_url: http://192.168.1.222:5678/webhook/content_scrape_result # "https://your-n8n-instance/webhook/scrape-result"
+  timeout_seconds: 10
+  authorization_header_name: "x-api-key"
+  authorization_header_value: "21ZCKkMVXoH1lhW7w2lg66iYja8EtRFW5qEZRoMIa55OmiBokLQgdNde4MpscjoS"

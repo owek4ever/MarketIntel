@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="900" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-15: Add Report to Vector Store — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_n8n_trigger" value="«AI Agent»&#xa;n8n: Report Generator" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="140" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n_vec" value="«AI Agent»&#xa;n8n: Add to Vector Store" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="310" y="60" width="140" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg_src" value="«PostgreSQL»&#xa;competitor_reports" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="540" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_embed" value="«FastAPI»&#xa;Vector Embedding API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="760" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_hf" value="«LocalModel»&#xa;SentenceTransformer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="980" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pgv" value="«pgvector»&#xa;report_embeddings" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1200" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+
+    <!-- Trigger from Report Generator -->
+    <mxCell id="m1" value="1: [webhook] POST /webhook/add_report_vector&#xa;   {report_id, report_type, content: markdown}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_trigger" target="lf_n8n_vec" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+
+    <!-- Fetch report from DB -->
+    <mxCell id="m2" value="2: SELECT id, content, report_type&#xa;   FROM competitor_reports WHERE id = $report_id" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_vec" target="lf_pg_src" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="200"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: {id, content, report_type}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg_src" target="lf_n8n_vec" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="235"/></mxGeometry>
+    </mxCell>
+
+    <!-- Chunking -->
+    <mxCell id="m2a" value="2.2: [chunk content into segments ≤ 512 tokens]&#xa;    chunks = split_by_heading(content)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_vec" target="lf_n8n_vec" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="275"/></mxGeometry>
+    </mxCell>
+
+    <!-- loop over chunks -->
+    <mxCell id="loop1" value="loop [for each chunk_index, chunk_text in chunks]" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;fontSize:10;" vertex="1" parent="1">
+      <mxGeometry x="310" y="300" width="1060" height="240" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3" value="3: POST /api/v1/embed {text: 'passage: ' + chunk_text}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_vec" target="lf_embed" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="335"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3a" value="3.1: model.encode(chunk, normalize=True)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_embed" target="lf_hf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="370"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3b" value="3.2: np.ndarray[768] → List[float]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_hf" target="lf_embed" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="405"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.3: {embedding: vector[768]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_embed" target="lf_n8n_vec" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="440"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" value="4: INSERT INTO report_embeddings&#xa;   (report_id, chunk_index, chunk_text, embedding::vector(768))" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_vec" target="lf_pgv" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="480"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.1: embedding_id (HNSW cosine index auto-updated)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pgv" target="lf_n8n_vec" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="515"/></mxGeometry>
+    </mxCell>
+
+    <!-- Mark as indexed -->
+    <mxCell id="m5" value="5: UPDATE competitor_reports SET vector_indexed = true&#xa;   WHERE id = $report_id" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_vec" target="lf_pg_src" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="570"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.1: UPDATE 1" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg_src" target="lf_n8n_vec" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="605"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m6" value="6: 200 OK {chunks_indexed: N, report_id}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_n8n_vec" target="lf_n8n_trigger" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="650"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="note" value="report_embeddings table:&#xa;  id BIGSERIAL PK&#xa;  report_id INT FK&#xa;  chunk_index INT&#xa;  chunk_text TEXT&#xa;  embedding vector(768)&#xa;  HNSW index: cosine_ops" style="shape=note;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=9;align=left;" vertex="1" parent="1">
+      <mxGeometry x="1200" y="590" width="200" height="120" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

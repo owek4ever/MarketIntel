@@ -1,0 +1,15 @@
+[project]
+name = "vector-embedding-service"
+version = "0.1.0"
+description = "Microservice to generate embeddings and post to webhooks"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "httpx>=0.26.0",
+    "sentence-transformers>=2.3.0",
+    "torch>=2.1.0",
+]

@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Extractor as List Extractor
+    participant Page as Web Page
+    participant JS as Browser Engine
+
+    Note over Extractor, Page: Phase 1: Structured Data Check (Optional)
+    Extractor->>Page: Check for hidden structured data (JSON-LD)
+    Page-->>Extractor: Data Elements
+    
+    alt Found 'ItemList' or 'Product' Data
+        Extractor->>Extractor: Extract URLs directly from data
+    else No Structured Data Found
+        Note over Extractor, JS: Phase 2: Smart Visual Scanning
+        Extractor->>JS: Scan page for "Product Hints"
+        Note right of JS: Look for visible text like "Add to cart" or prices
+        JS->>JS: Ignore elements in menus, headers, or footers
+        JS-->>Extractor: Found Product Card hints
+        
+        Extractor->>JS: Find Product Links near Hints
+        Note right of JS: Climb up the layout from the hint to find product link
+        JS->>JS: Try multiple link extraction strategies
+        JS->>JS: Group found links by the strategy used
+        
+        Note over JS, Extractor: Phase 3: Strategy Selection
+        JS->>JS: Pick the strategy that found the MOST unique products
+        JS-->>Extractor: Best list of Product URLs
+    end
+    
+    Extractor-->>Extractor: Return List of Product URLs

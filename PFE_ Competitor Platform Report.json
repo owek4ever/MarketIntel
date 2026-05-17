@@ -1,0 +1,902 @@
+{
+  "name": "PFE: Competitor Platform Report",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "benchmark-report",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1168,
+        16
+      ],
+      "id": "d2876aed-8aa7-457a-8378-770d79bbe788",
+      "name": "Webhook",
+      "webhookId": "6c90d34f-ac01-4476-b75f-bd9f98a9d1eb",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a competitive intelligence report using the provided structured analytics.\n\n# TARGET COMPETITOR\ncompetitor_id: {{ $('Extract competitor information').item.json.competitor_id }}\ndomain: {{ $('Extract competitor information').item.json.competitor_domain?.toJsonString() }}\ndescription {{ $('Extract competitor information').item.json.competitor_description.toJsonString() }}\n\n# ANALYSIS DATE\n{{DateTime.now().toISO()}}\n\n# AVAILABLE DATASETS\n\nThe following summarized datasets are provided.\n\n## 1. Competitor Category Scores\nSource: competitor_scores\n\nFields:\n- competitor_id\n- competitor_domain\n- coverage_score\n- depth_score\n- availability_score\n- final_score\n\nMeaning:\n- coverage_score:\n  weighted strategic target competitor category coverage of our company's categories \n\n- depth_score:\n  normalized weighted product depth\n\n- availability_score:\n  percentage of products in stock\n\n- final_score:\n  weighted final category competitiveness score\n\nDATA:\n{{ $('competitor_scores').item.json.toJsonString() }}\n\n--------------------------------------------------\n\n## 2. Competitor SEO Summary\nSource: competitor_seo_summary\n\nFields:\n- total_pages\n- avg_seo_score\n- median_seo_score\n- avg_content_score\n- avg_on_page_score\n- avg_technical_score\n- avg_ux_score\n- seo_stddev\n\nMeaning:\n- avg_seo_score:\n  average SEO quality across pages\n\n- median_seo_score:\n  typical page quality\n\n- seo_stddev:\n  consistency indicator\n  higher deviation means inconsistent optimization quality\n\n\nDATA:\n{{ $('competitor_seo_summary').item.json.toJsonString() }}\n\n--------------------------------------------------\n\n## 3. Competitor Gap Matrix\nSource: competitor_gap_matrix\n\nFields:\n- competitor_a\n- competitor_b\n- seo_gap\n- content_gap\n- technical_gap\n- ux_gap\n\nMeaning:\nPositive values mean competitor_a performs better.\n\nNegative values mean competitor_a underperforms compared to competitor_b.\n\nDATA:\n{{ $('competitor_gap_matrix').all().map(el => el.json).toJsonString() }}\n\n--------------------------------------------------\n\n## 4. Competitor Top Issues\nSource: competitor_top_issues\n\nFields:\n- issue\n- occurrence_count\n- affected_pages\n- total_impact\n- avg_impact\n- impact_ratio\n- coverage_ratio\n- priority_score\n- rank\n\nMeaning:\nIssues are normalized and prioritized using:\n- impact severity\n- affected page count\n- overall competitor impact share\n\nDATA:\n{{ $('competitor_top_issues').all().map(el => el.json).toJsonString() }}\n\n--------------------------------------------------\n\n## 5. Competitor Action Plan\nSource: competitor_action_plan\n\nFields:\n- issue\n- total_priority\n- avg_priority\n- total_affected_pages\n- priority_level\n\nMeaning:\nAggregated strategic action priorities.\n\nPriority levels:\n- critical\n- high\n- medium\n- low\n\nDATA:\n{{ $('competitor_action_plan').all().map(el => el.json).toJsonString() }}\n\n--------------------------------------------------\n\n## 6. Competitor Page Scores\nSource: competitor_page_scores\n\nFields:\n- total_pages\n- avg_score\n- median_score\n- worst_page_score\n- best_page_score\n\nScore for each page is calculated like the following:\n\n- ttfb_score (Time To First Byte Score)\n- fp_score (First Paint Score)\n- di_score (DOM Interactive Score)\n- dc_score (DOM Complete Score)\n- ps_score (Page Size Score)\n- dom_score (DOM Size Score)\n- res_score (Resource Count Score)\n\npage_speed_score = ttfb_score * 0.20 + fp_score * 0.20 + di_score * 0.20 + dc_score * 0.15 + ps_score * 0.10 + dom_score * 0.10 + res_score * 0.05\n\nseo.overall_score = content_score * 0.35 + on_page_score * 0.25 + technical_score * 0.35 + ux_score * 0.05\n\nscore = seo.overall_score * 0.7 + page_speed_score * 0.3\n\nMeaning:\nOverall page quality benchmark.\n\nDATA:\n{{ $('competitor_page_scores').item.json.toJsonString() }}\n\n--------------------------------------------------\n\n## 7. Page Type Scores\nSource: page_type_scores\n\nFields:\n- page_type\n- avg\n\nMeaning:\nAverage score by page type:\n\nDATA:\n{{ $('page_type_scores').all().map(el => el.json).toJsonString() }}\n\n--------------------------------------------------\n\n# REPORT OBJECTIVES\n\nGenerate:\n1. Executive summary\n2. Competitor strengths\n3. Competitor weaknesses\n4. SEO analysis\n5. Technical performance analysis\n6. Content quality analysis\n7. UX observations\n8. Strategic category analysis\n9. Competitive gap analysis\n10. Prioritized recommendations\n11. High-impact action opportunities\n12. Risk assessment\n\n# IMPORTANT RULES\n\n- Base all conclusions on provided metrics.\n- Explain why metrics matter.\n- Prioritize business impact.\n- Mention score inconsistencies when stddev is high.\n- Highlight severe technical problems.\n- Identify strategic opportunities.\n- Do not hallucinate unavailable data.\n- Keep recommendations actionable.",
+        "options": {
+          "systemMessage": "You are an AI Competitive Intelligence Analyst specialized in e-commerce benchmarking, SEO analysis, technical website auditing, and social media intelligence.\n\nYour role is to analyze structured competitor data generated by a data-driven competitive intelligence platform used to benchmark competitors against Comptoir Hammami.\n\nThe platform continuously scrapes competitor websites, extracts structured product and page information, calculates SEO and performance scores, analyzes technical quality, and aggregates strategic business insights.\n\nYou receive pre-aggregated analytics, scores, summarized metrics, aggregated statistics, prioritized issue lists, rankings, trends, and competitor comparisons generated from SQL materialized views and scoring pipelines.\n\nYour task is to:\n- Analyze competitor strengths and weaknesses\n- Explain score meanings\n- Identify technical SEO gaps\n- Detect strategic opportunities\n- Compare competitors\n- Generate actionable recommendations\n- Prioritize business and SEO improvements\n- Produce concise executive-level insights\n- Avoid hallucinating missing data\n- Only use provided metrics and context\n\nYou must think like:\n- a technical SEO consultant,\n- a performance engineer,\n- a competitive intelligence analyst,\n- and an e-commerce strategist.\n\n# PROJECT CONTEXT\n\nThis system benchmarks competitors based on:\n1. competitors coverage % of comptoir hammami categories\n2. Technical website performance\n3. SEO quality\n4. UX signals\n5. Page quality consistency\n6. Content optimization\n7. Competitive gaps\n8. Prioritized SEO issues\n\nThe goal is to identify:\n- which competitors dominate specific categories,\n- where competitors are weak,\n- which technical issues hurt visibility,\n- which websites have better SEO infrastructure,\n- and which strategic actions should be prioritized.\n\n# IMPORTANT SCORING CONTEXT\n\nMany scores are normalized relative to other competitors.\n\nA higher score always means better quality/performance unless explicitly stated otherwise.\n\nSome scores are weighted using business relevance and strategic importance.\n\n# DATA PIPELINE OVERVIEW\n\nThe system collects:\n- product catalogs\n- categories\n- pricing\n- stock availability\n- technical metadata\n- SEO audit signals\n- page structure signals\n- UX metrics\n- performance timings\n\nThen SQL views aggregate the data into:\n- competitor summaries\n- SEO benchmarks\n- gap analysis\n- issue prioritization\n- action plans\n- category dominance metrics\n- page quality scores\n\n# COMPETITOR CATEGORY SCORING\n\nFinal competitor category score is calculated as:\n\n50% Category Coverage\n30% Category Depth\n20% Availability\n\nDefinitions:\n- Coverage Score:\n  Measures how much of comptoir hammami's categories a competitor covers.\n  Weighted using target category relevance weights.\n\n- Depth Score:\n  Measures catalog depth inside relevant categories.\n  Higher product count in important categories increases score.\n\n- Availability Score:\n  Percentage of products currently in stock.\n\n# SEO SCORING\n\nPage SEO score combines:\n- Overall SEO score\n- Content quality\n- On-page optimization\n- Technical SEO\n- UX quality\n\nUX score is calculated from:\n- breadcrumb presence\n- structured content readability\n- paragraph quality\n- internal linking\n- external linking\n\n# PERFORMANCE SCORING\n\nPage performance scoring includes:\n- TTFB\n- First paint\n- DOM interactive\n- DOM complete\n- page size\n- DOM size\n- resource count\n\nLower timings and lighter pages produce higher scores.\n\n# ISSUE PRIORITIZATION\n\nTop SEO issues are prioritized using:\n- issue impact\n- affected pages\n- issue coverage ratio\n- impact ratio\n- logarithmic weighting\n\nPriority levels:\n- critical\n- high\n- medium\n- low\n\n# RESPONSE REQUIREMENTS\n\nYou must:\n- produce factual and data-grounded analysis,\n- explain why scores matter,\n- explain competitive implications,\n- prioritize recommendations,\n- mention risk severity,\n- avoid generic SEO advice unless supported by metrics.\n\nYou should:\n- summarize patterns,\n- identify outliers,\n- explain score distributions,\n- detect consistency problems,\n- highlight strategic opportunities.\n\nYou must NOT:\n- invent missing competitors,\n- fabricate trends,\n- assume unavailable metrics,\n- claim causation without evidence.\n\n# OUTPUT STYLE\n\nYour output should:\n- sound like a professional competitive intelligence report,\n- be concise but analytical,\n- prioritize business relevance,\n- explain technical findings in accessible language,\n- separate observations from recommendations.\n\nOUTPUT ONLY VALID JSON RESPECTING THE FOLLOWING SCHEMA:\n\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"executive_summary\": {\n      \"type\": \"string\"\n    },\n\n    \"overall_assessment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"market_position\": {\n          \"type\": \"string\"\n        },\n        \"competitive_strength\": {\n          \"type\": \"string\"\n        },\n        \"technical_maturity\": {\n          \"type\": \"string\"\n        },\n        \"seo_maturity\": {\n          \"type\": \"string\"\n        },\n       \"overall_competitive_threat_level\": {\n          \"type\": \"string\",\n          \"enum\": [\n              \"Very High\",\n              \"High\",\n              \"Medium\",\n              \"Low\"\n            ]\n        },\n      },\n      \"required\": [\n        \"market_position\",\n        \"competitive_strength\",\n        \"technical_maturity\",\n        \"seo_maturity\",\n        \"overall_competitive_threat_level\"\n      ]\n    },\n\n    \"category_analysis\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"coverage_analysis\": {\n          \"type\": \"string\"\n        },\n        \"depth_analysis\": {\n          \"type\": \"string\"\n        },\n        \"availability_analysis\": {\n          \"type\": \"string\"\n        },\n        \"strategic_opportunities\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"required\": [\n        \"coverage_analysis\",\n        \"depth_analysis\",\n        \"availability_analysis\",\n        \"strategic_opportunities\"\n      ]\n    },\n\n    \"seo_analysis\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"overall_seo_quality\": {\n          \"type\": \"string\"\n        },\n        \"content_quality_analysis\": {\n          \"type\": \"string\"\n        },\n        \"technical_seo_analysis\": {\n          \"type\": \"string\"\n        },\n        \"ux_analysis\": {\n          \"type\": \"string\"\n        },\n        \"consistency_analysis\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"overall_seo_quality\",\n        \"content_quality_analysis\",\n        \"technical_seo_analysis\",\n        \"ux_analysis\",\n        \"consistency_analysis\"\n      ]\n    },\n\n    \"performance_analysis\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"page_speed_analysis\": {\n          \"type\": \"string\"\n        },\n        \"frontend_efficiency_analysis\": {\n          \"type\": \"string\"\n        },\n        \"resource_optimization_analysis\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"page_speed_analysis\",\n        \"frontend_efficiency_analysis\",\n        \"resource_optimization_analysis\"\n      ]\n    },\n\n    \"competitive_gaps\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"against_competitor\": {\n            \"type\": \"string\"\n          },\n          \"strongest_advantage\": {\n            \"type\": \"string\"\n          },\n          \"largest_weakness\": {\n            \"type\": \"string\"\n          },\n          \"summary\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"against_competitor\",\n          \"strongest_advantage\",\n          \"largest_weakness\",\n          \"summary\"\n        ]\n      }\n    },\n\n    \"top_issues\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"issue\": {\n            \"type\": \"string\"\n          },\n          \"severity\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"critical\",\n              \"high\",\n              \"medium\",\n              \"low\"\n            ]\n          },\n          \"business_impact\": {\n            \"type\": \"string\"\n          },\n          \"recommended_action\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"issue\",\n          \"severity\",\n          \"business_impact\",\n          \"recommended_action\"\n        ]\n      }\n    },\n\n    \"priority_actions\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"priority\": {\n            \"type\": \"integer\"\n          },\n          \"action\": {\n            \"type\": \"string\"\n          },\n          \"expected_impact\": {\n            \"type\": \"string\"\n          },\n          \"difficulty\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"low\",\n              \"medium\",\n              \"high\"\n            ]\n          }\n        },\n        \"required\": [\n          \"priority\",\n          \"action\",\n          \"expected_impact\",\n          \"difficulty\"\n        ]\n      }\n    },\n\n    \"risk_assessment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"technical_risk\": {\n          \"type\": \"string\"\n        },\n        \"seo_risk\": {\n          \"type\": \"string\"\n        },\n        \"competitive_risk\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"technical_risk\",\n        \"seo_risk\",\n        \"competitive_risk\"\n      ]\n    },\n\n    \"final_conclusion\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"executive_summary\",\n    \"overall_assessment\",\n    \"category_analysis\",\n    \"seo_analysis\",\n    \"performance_analysis\",\n    \"competitive_gaps\",\n    \"top_issues\",\n    \"priority_actions\",\n    \"risk_assessment\",\n    \"final_conclusion\"\n  ]\n}",
+          "maxIterations": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1520,
+        -336
+      ],
+      "id": "766baa5e-e3c3-4006-87ed-7eb3bac7555a",
+      "name": "AI Agent",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-4-31b-it",
+        "options": {
+          "maxRetries": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        -96
+      ],
+      "id": "f53efdf2-614b-4e2d-9ebb-7ea82c35f1c9",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "omzfgpSOq5dDgqZu",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <title>Competitive Intelligence Report</title>\n\n        <style>\n            * {\n                margin: 0;\n                padding: 0;\n                box-sizing: border-box;\n            }\n\n            body {\n                font-family: Arial, Helvetica, sans-serif;\n                background: #f3f4f6;\n                color: #111827;\n                padding: 40px;\n                line-height: 1.6;\n            }\n\n            .report {\n                max-width: 1000px;\n                margin: auto;\n                background: white;\n                border-radius: 18px;\n                overflow: hidden;\n                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);\n            }\n\n            .hero {\n                background: linear-gradient(135deg, #111827, #1f2937);\n                color: white;\n                padding: 48px;\n            }\n\n            .hero-top {\n                display: flex;\n                flex-direction: column;\n                justify-content: space-between;\n                align-items: flex-start;\n                gap: 12px;\n            }\n\n            .hero h1 {\n                font-size: 42px;\n                margin-bottom: 12px;\n            }\n\n            .hero p {\n                color: rgba(255, 255, 255, 0.85);\n                max-width: 760px;\n            }\n\n            .risk-badge {\n                padding: 12px 20px;\n                border-radius: 999px;\n                font-weight: bold;\n                font-size: 12px;\n                text-transform: uppercase;\n            }\n\n            .risk-high {\n                background: #dc2626;\n            }\n\n            .risk-medium {\n                background: #d97706;\n            }\n\n            .risk-low {\n                background: #16a34a;\n            }\n\n            .section {\n                padding: 40px;\n                border-bottom: 1px solid #e5e7eb;\n            }\n\n            .section-title {\n                font-size: 28px;\n                margin-bottom: 24px;\n                color: #111827;\n            }\n\n            .grid-2 {\n                display: grid;\n                grid-template-columns: repeat(2, 1fr);\n                gap: 24px;\n            }\n\n            .grid-3 {\n                display: grid;\n                grid-template-columns: repeat(3, 1fr);\n                gap: 20px;\n            }\n\n            .grid-4 {\n                display: grid;\n                grid-template-columns: repeat(4, 1fr);\n                gap: 18px;\n            }\n\n            .metric-card {\n                background: #f9fafb;\n                border: 1px solid #e5e7eb;\n                border-radius: 16px;\n                padding: 24px;\n            }\n\n            .metric-label {\n                font-size: 13px;\n                text-transform: uppercase;\n                color: #6b7280;\n                margin-bottom: 10px;\n            }\n\n            .metric-value {\n                font-size: 42px;\n                font-weight: bold;\n                margin-bottom: 10px;\n            }\n\n            .metric-description {\n                font-size: 14px;\n                color: #6b7280;\n            }\n\n            .severity {\n                display: inline-block;\n                margin-top: 12px;\n                padding: 6px 12px;\n                border-radius: 999px;\n                font-size: 12px;\n                font-weight: bold;\n                text-transform: uppercase;\n            }\n\n            .critical {\n                background: #fee2e2;\n                color: #991b1b;\n            }\n\n            .high {\n                background: #ffedd5;\n                color: #9a3412;\n            }\n\n            .medium {\n                background: #fef3c7;\n                color: #92400e;\n            }\n\n            .low {\n                background: #dcfce7;\n                color: #166534;\n            }\n\n            .summary-box {\n                background: #eff6ff;\n                border-left: 6px solid #2563eb;\n                padding: 28px;\n                border-radius: 16px;\n                font-size: 17px;\n            }\n\n            .assessment-grid {\n                display: grid;\n                grid-template-columns: repeat(2, 1fr);\n                gap: 20px;\n                margin-top: 28px;\n            }\n\n            .assessment-card {\n                border: 1px solid #e5e7eb;\n                border-radius: 14px;\n                padding: 20px;\n                background: white;\n            }\n\n            .assessment-card h3 {\n                font-size: 14px;\n                text-transform: uppercase;\n                color: #6b7280;\n                margin-bottom: 8px;\n            }\n\n            .assessment-card p {\n                font-size: 18px;\n                font-weight: bold;\n            }\n\n            .progress-container {\n                margin-top: 18px;\n            }\n\n            .progress-label {\n                display: flex;\n                justify-content: space-between;\n                margin-bottom: 8px;\n                font-size: 14px;\n            }\n\n            .progress-bar {\n                height: 12px;\n                background: #e5e7eb;\n                border-radius: 999px;\n                overflow: hidden;\n            }\n\n            .progress-fill {\n                height: 100%;\n                background: #2563eb;\n            }\n\n            .insight-card {\n                width: 450px;\n                height: 200px;\n                border: 1px solid #e5e7eb;\n                border-radius: 16px;\n                padding: 24px;\n                background: #fafafa;\n                margin-bottom: 20px;\n            }\n\n            .insight-card h3 {\n                margin-bottom: 12px;\n                font-size: 20px;\n            }\n\n            .issue-card {\n                border-left: 6px solid #dc2626;\n                background: #fff5f5;\n                border-radius: 14px;\n                padding: 24px;\n                margin-bottom: 20px;\n            }\n\n            .issue-card h3 {\n                margin-bottom: 12px;\n                font-size: 20px;\n            }\n\n            .issue-meta {\n                display: flex;\n                gap: 10px;\n                margin-bottom: 14px;\n                flex-wrap: wrap;\n            }\n\n            .action-card {\n                border: 1px solid #e5e7eb;\n                border-radius: 16px;\n                padding: 24px;\n                background: white;\n                position: relative;\n            }\n\n            .priority-number {\n                position: absolute;\n                top: 18px;\n                right: 18px;\n                width: 36px;\n                height: 36px;\n                border-radius: 50%;\n                background: #111827;\n                color: white;\n                display: flex;\n                align-items: center;\n                justify-content: center;\n                font-weight: bold;\n            }\n\n            .action-card h3 {\n                margin-bottom: 14px;\n                padding-right: 50px;\n            }\n\n            .gap-card {\n                border: 1px solid #e5e7eb;\n                border-radius: 16px;\n                padding: 20px;\n                background: #f9fafb;\n            }\n\n            .gap-card h3 {\n                margin-bottom: 18px;\n            }\n\n            .gap-item {\n                margin-bottom: 12px;\n            }\n\n            .risk-grid {\n                display: grid;\n                grid-template-columns: repeat(3, 1fr);\n                gap: 20px;\n            }\n\n            .risk-panel {\n                padding: 24px;\n                border-radius: 16px;\n                color: white;\n            }\n\n            .risk-panel h3 {\n                margin-bottom: 14px;\n                font-size: 20px;\n            }\n\n            .risk-panel.high {\n                background: #dc2626;\n            }\n\n            .risk-panel.medium {\n                background: #d97706;\n            }\n\n            .risk-panel.low {\n                background: #16a34a;\n            }\n\n            .final-conclusion {\n                background: #111827;\n                color: white;\n                padding: 40px;\n                border-radius: 18px;\n                font-size: 18px;\n                line-height: 1.8;\n            }\n\n            ul {\n                margin-top: 12px;\n                padding-left: 20px;\n            }\n\n            li {\n                margin-bottom: 10px;\n            }\n\n            @media print {\n                body {\n                    background: white;\n                    padding: 0;\n                }\n\n                .report {\n                    box-shadow: none;\n                    border-radius: 0;\n                }\n\n                .section {\n                    page-break-inside: avoid;\n                    border-bottom: 0;\n                }\n\n                .issue-card:nth-child(even) {\n                    margin-top: 100px;\n                }\n\n                .issue-card:nth-child(odd) {\n                    margin-bottom: 100px;\n                }\n            }\n        </style>\n</head>\n\n<body>\n\n<div class=\"report\">\n\n  <!-- HERO -->\n  <section class=\"hero\">\n\n    <div class=\"hero-top\">\n\n      <div\n          style=\"\n              width: 100%;\n              display: flex;\n              justify-content: space-between;\n              align-items: center;\n          \"\n      >\n        <h1>{{ $('Extract competitor information').item.json.competitor_name || $('Extract competitor information').item.json.competitor_domain }}</h1>\n        <div class=\"risk-badge risk-{{ $json.output.overall_assessment.overall_competitive_threat_level.toLowerCase() === \"very high\" ? \"high\" : $json.output.overall_assessment.overall_competitive_threat_level.toLowerCase() }}\">\n          {{$json.output.overall_assessment.overall_competitive_threat_level}} Competitive threat level\n        </div>\n      </div>\n        <p style=\"max-width: 100%\">\n          {{ $json.output.executive_summary }}\n        </p>\n\n    </div>\n\n  </section>\n\n  <!-- STRATEGIC SCORECARDS -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Strategic Scorecards</h2>\n\n    <div class=\"grid-4\">\n\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Coverage Score</div>\n        <div class=\"metric-value\">{{ $('competitor_scores').item.json.coverage_score }}%</div>\n        <div class=\"metric-description\">\n          Category coverage against Comptoir Hammami's categories\n        </div>\n        <div class=\"severity {{ $('competitor_scores').item.json.depth_score > 30 ? $('competitor_scores').item.json.depth_score > 55 ? $('competitor_scores').item.json.depth_score > 80 ? \"critical\" : \"strong\" : \"medium\" : \"low\" }}\">{{ /^.*?(?=\\s\\()/.exec($json.output.category_analysis.coverage_analysis) }}</div>\n      </div>\n\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Depth Score</div>\n        <div class=\"metric-value\">{{ $('competitor_scores').item.json.depth_score }}%</div>\n        <div class=\"metric-description\">\n          Product depth within covered categories.\n        </div>\n        <div class=\"severity {{ $('competitor_scores').item.json.depth_score > 30 ? $('competitor_scores').item.json.depth_score > 55 ? $('competitor_scores').item.json.depth_score > 80 ? \"critical\" : \"strong\" : \"medium\" : \"low\" }}\">{{ $('competitor_scores').item.json.depth_score > 30 ? $('competitor_scores').item.json.depth_score > 55 ? $('competitor_scores').item.json.depth_score > 80 ? \"Critical\" : \"Strong\" : \"Medium\" : \"Low\" }}</div>\n      </div>\n\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">Availability Score</div>\n        <div class=\"metric-value\">{{ $('competitor_scores').item.json.availability_score }}%</div>\n        <div class=\"metric-description\">\n          Percentage of products currently available.\n        </div>\n        <div class=\"severity critical\">Critical</div>\n      </div>\n\n      <div class=\"metric-card\">\n        <div class=\"metric-label\">SEO Score</div>\n        <div class=\"metric-value\">{{ $('competitor_seo_summary').item.json.avg_seo_score }}</div>\n        <div class=\"metric-description\">\n          Average SEO quality across all analyzed pages.\n        </div>\n        <div class=\"severity medium\">Moderate</div>\n      </div>\n\n    </div>\n\n  </section>\n\n  <!-- EXECUTIVE INSIGHT -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Executive Intelligence Summary</h2>\n\n    <div class=\"summary-box\">\n      {{ $json.output.executive_summary }}\n    </div>\n\n    <div class=\"assessment-grid\">\n\n      <div class=\"assessment-card\">\n        <h3>Market Position</h3>\n        <p>{{ $json.output.overall_assessment.market_position }}</p>\n      </div>\n\n      <div class=\"assessment-card\">\n        <h3>Competitive Strength</h3>\n        <p>{{ $json.output.overall_assessment.competitive_strength }}</p>\n      </div>\n\n      <div class=\"assessment-card\">\n        <h3>Technical Maturity</h3>\n        <p>{{ $json.output.overall_assessment.technical_maturity }}</p>\n      </div>\n\n      <div class=\"assessment-card\">\n        <h3>SEO Maturity</h3>\n        <p>{{ $json.output.overall_assessment.seo_maturity }}</p>\n      </div>\n\n    </div>\n\n  </section>\n\n  <!-- CATEGORY ANALYSIS -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Category Intelligence</h2>\n\n    <div class=\"grid-2\">\n\n      <div>\n\n        <div class=\"progress-container\">\n          <div class=\"progress-label\">\n            <span>Coverage</span>\n            <span>{{ $('competitor_scores').item.json.coverage_score }}%</span>\n          </div>\n\n          <div class=\"progress-bar\">\n            <div class=\"progress-fill\" style=\"width: {{$('competitor_scores').item.json.coverage_score}}%\"></div>\n          </div>\n        </div>\n\n        <div class=\"progress-container\">\n          <div class=\"progress-label\">\n            <span>Depth</span>\n            <span>{{ $('competitor_scores').item.json.depth_score }}%</span>\n          </div>\n\n          <div class=\"progress-bar\">\n            <div class=\"progress-fill\" style=\"width: {{ $('competitor_scores').item.json.depth_score }}%\"></div>\n          </div>\n        </div>\n\n        <div class=\"progress-container\">\n          <div class=\"progress-label\">\n            <span>Availability</span>\n            <span>{{ $('competitor_scores').item.json.availability_score }}%</span>\n          </div>\n\n          <div class=\"progress-bar\">\n            <div class=\"progress-fill\" style=\"width: {{ $('competitor_scores').item.json.availability_score }}%\"></div>\n          </div>\n        </div>\n\n      </div>\n\n      <div>\n\n        <div class=\"insight-card\">\n          <h3>Coverage Analysis</h3>\n          <p>{{ $json.output.category_analysis.coverage_analysis }}</p>\n        </div>\n\n        <div class=\"insight-card\">\n          <h3>Depth Analysis</h3>\n          <p>{{ $json.output.category_analysis.depth_analysis }}</p>\n        </div>\n\n        <div class=\"insight-card\">\n          <h3>Availability Analysis</h3>\n          <p>{{ $json.output.category_analysis.availability_analysis }}</p>\n        </div>\n\n      </div>\n\n    </div>\n\n  </section>\n\n  <!-- SEO & PERFORMANCE -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">SEO & Technical Audit</h2>\n\n    <div class=\"grid-2\">\n\n      <div>\n\n        <div class=\"insight-card\">\n          <h3>SEO Quality</h3>\n          <p>{{ $json.output.seo_analysis.overall_seo_quality }}</p>\n        </div>\n\n        <div class=\"insight-card\">\n          <h3>Content Quality</h3>\n          <p>{{ $json.output.seo_analysis.content_quality_analysis }}</p>\n        </div>\n\n        <div class=\"insight-card\">\n          <h3>Technical SEO</h3>\n          <p>{{$json.output.seo_analysis.technical_seo_analysis}}</p>\n        </div>\n\n      </div>\n\n      <div>\n\n        <div class=\"insight-card\">\n          <h3>UX Analysis</h3>\n          <p>{{$json.output.seo_analysis.ux_analysis}}</p>\n        </div>\n\n        <div class=\"insight-card\">\n          <h3>Consistency Analysis</h3>\n          <p>{{$json.output.seo_analysis.consistency_analysis}}</p>\n        </div>\n\n        <div class=\"insight-card\">\n          <h3>Performance Analysis</h3>\n          <p>{{$json.output.performance_analysis.page_speed_analysis}}</p>\n        </div>\n\n      </div>\n\n    </div>\n\n  </section>\n\n  <!-- COMPETITIVE GAPS -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Competitive Gap Analysis</h2>\n\n    <div class=\"grid-2\">\n\n      {{\n      \n      $json.output.competitive_gaps.map(el => `\n        <div class=\"gap-card\">\n          <h3>${el.against_competitor}</h3>\n          <div class=\"gap-item\">\n              <strong>Strongest Advantage:</strong>\n              <p>${el.strongest_advantage}</p>\n            </div>\n    \n            <div class=\"gap-item\">\n              <strong>Largest Weakness:</strong>\n              <p>${el.largest_weakness}</p>\n            </div>\n    \n            <div class=\"gap-item\">\n              <strong>Summary:</strong>\n              <p>${el.summary}</p>\n            </div>\n    \n          </div>\n      `).join('')\n      \n      }}\n\n    </div>\n\n  </section>\n\n  <!-- CRITICAL ISSUES -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Critical Issues & Risks</h2>\n\n          {{\n      \n      $json.output.top_issues.map(el => `\n        <div class=\"issue-card\">\n\n      <div class=\"issue-meta\">\n        <div class=\"severity ${el.severity}\">\n          ${el.severity}\n        </div>\n      </div>\n\n      <h3>${el.issue}</h3>\n\n      <p>\n        <strong>Business Impact:</strong>\n        ${el.business_impact}\n      </p>\n\n      <br>\n\n      <p>\n        <strong>Recommended Action:</strong>\n        ${el.recommended_action}\n      </p>\n\n    </div>\n      `).join('')\n      \n      }}\n\n  </section>\n\n  <!-- PRIORITY ROADMAP -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Priority Action Roadmap</h2>\n\n    <div class=\"grid-2\">\n                {{\n      \n      $json.output.priority_actions.map(el => `\n      <div class=\"action-card\">\n\n        <div class=\"priority-number\">\n          ${el.priority}\n        </div>\n\n        <h3>${el.action}</h3>\n\n        <p>\n          <strong>Expected Impact:</strong>\n          ${el.expected_impact}\n        </p>\n\n        <br>\n\n        <div class=\"severity ${el.difficulty}\">\n          Difficulty: ${el.difficulty}\n        </div>\n\n      </div>\n      `).join('')\n      \n      }}\n\n    </div>\n\n  </section>\n\n  <!-- RISK ASSESSMENT -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Risk Assessment</h2>\n\n    <div class=\"risk-grid\">\n\n      <div class=\"risk-panel high\">\n        <h3>Technical Risk</h3>\n        <p>{{$json.output.risk_assessment.technical_risk}}</p>\n      </div>\n\n      <div class=\"risk-panel medium\">\n        <h3>SEO Risk</h3>\n        <p>{{$json.output.risk_assessment.seo_risk}}</p>\n      </div>\n\n      <div class=\"risk-panel high\">\n        <h3>Competitive Risk</h3>\n        <p>{{$json.output.risk_assessment.competitive_risk}}</p>\n      </div>\n\n    </div>\n\n  </section>\n\n  <!-- FINAL CONCLUSION -->\n  <section class=\"section\">\n\n    <h2 class=\"section-title\">Final Strategic Conclusion</h2>\n\n    <div class=\"final-conclusion\">\n      {{$json.output.final_conclusion}}\n    </div>\n\n  </section>\n\n</div>\n\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2064,
+        -336
+      ],
+      "id": "aba367bb-ac68-4336-848c-cbd82258de26",
+      "name": "HTML",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "competitors",
+          "mode": "list",
+          "cachedResultName": "competitors"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.body.competitor_id }}"
+            },
+            {
+              "column": "domain",
+              "condition": "LIKE",
+              "value": "={{ $json.body.domain }}"
+            },
+            {
+              "column": "name",
+              "value": "={{ $json.body.name }}"
+            }
+          ]
+        },
+        "combineConditions": "OR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -624,
+        -144
+      ],
+      "id": "f78ca401-3fbb-4b44-8358-87e7eab6fe81",
+      "name": "Select rows from a table",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_page_scores WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Extract competitor information').item.json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        368,
+        -336
+      ],
+      "id": "bc718fc0-17e8-4173-b605-372fe3f36e74",
+      "name": "competitor_page_scores",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_seo_summary WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        160,
+        -336
+      ],
+      "id": "ddad00e8-90c6-436f-9772-ead7fff6cf45",
+      "name": "competitor_seo_summary",
+      "executeOnce": true,
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_scores WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Extract competitor information').item.json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        560,
+        -336
+      ],
+      "id": "e4479fa8-05c5-4969-b044-7ece1ff02f09",
+      "name": "competitor_scores",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_top_issues WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Extract competitor information').item.json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        736,
+        -336
+      ],
+      "id": "d5181b64-029d-4855-8f8f-9c285ea7346c",
+      "name": "competitor_top_issues",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_gap_matrix WHERE competitor_a = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Extract competitor information').item.json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        944,
+        -336
+      ],
+      "id": "d1bfcbd1-132a-4288-9c60-071b5536221e",
+      "name": "competitor_gap_matrix",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM page_type_scores WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Extract competitor information').item.json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1120,
+        -336
+      ],
+      "id": "942019cf-6ba3-4b8b-ba83-ce60439e3504",
+      "name": "page_type_scores",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_action_plan WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Extract competitor information').item.json.competitor_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1312,
+        -336
+      ],
+      "id": "bc21b9cd-a82d-4cca-a568-83d17bf1b57d",
+      "name": "competitor_action_plan",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "215f50d1-959c-499e-9a4c-a675b711b5ea",
+              "name": "output",
+              "value": "={{ JSON.parse($json.output.replace(/^```json\\s*/i, '')\n  .replace(/```$/, '')\n  .trim())}}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1856,
+        -336
+      ],
+      "id": "254a0199-6b18-4de3-b92c-5f05d4e0ff04",
+      "name": "parse output",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.html }}",
+        "destinationKey": "markdown",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        -336
+      ],
+      "id": "2558a99d-01a7-468a-8e73-fbf439b3e1ca",
+      "name": "Markdown",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "36f5dec5-c299-4190-a639-dcb1a9a61bd7",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -400,
+        -144
+      ],
+      "id": "b15184b5-c058-4254-967a-04f2ef273ae6",
+      "name": "If competitor exists",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"reason\": \"please check your parameters, one parameter is enough to perform the benchmark\",\n  \"request_body_format\": {\n    \"competitor_id\": 123,\n    \"domain\": \"www.example.com\",\n    \"name\": \"example\",\n    \"output_format\": {\n      \"type\": \"string\",\n      \"enum\": [\"html\", \"markdown\", \"json\"]\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -640,
+        128
+      ],
+      "id": "8c088fa0-3b11-4a48-9306-b2a59601fc8a",
+      "name": "Respond with invalid parameters",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"reason\": \"competitor not found\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -32,
+        -48
+      ],
+      "id": "961931f0-9b72-41cd-8d4e-43fb1f349840",
+      "name": "Respond with not found",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ad89109c-e7b3-44c5-82a5-16f0c9d66f44",
+              "leftValue": "={{ $json.body.competitor_id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "589fe292-c6ea-4168-bda7-96b04fb421a5",
+              "leftValue": "={{ $json.body.domain || \"\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2d06192c-8a39-42fc-86da-e66ff3c47605",
+              "leftValue": "={{ $json.body.name || \"\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -960,
+        16
+      ],
+      "id": "71a243ae-4195-4b5d-92aa-0a1bba4fa5d9",
+      "name": "If parameters are valid"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d4feefc-d79a-495d-9295-45ae89fa57d5",
+              "name": "competitor_id",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "650044f7-b2b1-406d-9c2a-eb181e6b7852",
+              "name": "competitor_domain",
+              "value": "={{ $json.domain }}",
+              "type": "string"
+            },
+            {
+              "id": "e99be079-582b-488d-a261-8a83f9577d0e",
+              "name": "competitor_name",
+              "value": "={{ $json.name || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "e05e4030-c84f-47b4-92c5-2e0e7777939e",
+              "name": "competitor_description",
+              "value": "={{ $json.metadata?.meta_description || \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -32,
+        -336
+      ],
+      "id": "9c26363e-6105-49db-b141-0ed55768ce33",
+      "name": "Extract competitor information",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.output_format || \"\" }}",
+                    "rightValue": "html",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "0455beb8-ac4e-4f5e-a250-433faf89d452"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HTML"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c5fee938-c062-4d0e-879f-c97ca5b967dc",
+                    "leftValue": "={{ $('Webhook').item.json.body.output_format || \"\" }}",
+                    "rightValue": "markdown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Markdown"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c9d503d0-9f7a-4b94-a1f6-7cc1fc614a00",
+                    "leftValue": "={{ $('Webhook').item.json.body.output_format || \"\" }}",
+                    "rightValue": "json",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JSON"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Default"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2464,
+        -368
+      ],
+      "id": "8526cf73-10f2-4165-b130-c1b9659ac15e",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2944,
+        -608
+      ],
+      "id": "ca6537f9-9634-4b86-8c9f-d5a0d0c7c85a",
+      "name": "Respond with HTML",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.markdown }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2944,
+        -448
+      ],
+      "id": "e6a4409b-1be9-47b3-afca-f0e4840614d2",
+      "name": "Respond with Markdown",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"html\": {{ $json.html.toJsonString() }},\n  \"markdown\": {{ $json.markdown.toJsonString() }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2944,
+        -288
+      ],
+      "id": "3ef38006-f621-49c4-9d7b-fb821ff431cc",
+      "name": "Respond with JSON",
+      "executeOnce": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If parameters are valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "parse output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "If competitor exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "competitor_page_scores": {
+      "main": [
+        [
+          {
+            "node": "competitor_scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "competitor_seo_summary": {
+      "main": [
+        [
+          {
+            "node": "competitor_page_scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "competitor_scores": {
+      "main": [
+        [
+          {
+            "node": "competitor_top_issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "competitor_top_issues": {
+      "main": [
+        [
+          {
+            "node": "competitor_gap_matrix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "competitor_gap_matrix": {
+      "main": [
+        [
+          {
+            "node": "page_type_scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "page_type_scores": {
+      "main": [
+        [
+          {
+            "node": "competitor_action_plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "competitor_action_plan": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse output": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If competitor exists": {
+      "main": [
+        [
+          {
+            "node": "Extract competitor information",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with not found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If parameters are valid": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with invalid parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract competitor information": {
+      "main": [
+        [
+          {
+            "node": "competitor_seo_summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Respond with HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond with HTML": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "cf3e0a2d-cfd8-49de-95a1-e21bc5693af4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "Ayw6pZODNuV70Caz7h3d2",
+  "tags": []
+}

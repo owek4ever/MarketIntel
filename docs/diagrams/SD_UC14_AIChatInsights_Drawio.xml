@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="950" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-14: AI Chat — Competitive Insights — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_analyst" value="«Human»&#xa;Competitive Analyst" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n: Chat AI Insights" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_embed" value="«FastAPI»&#xa;Vector Embedding API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pgv" value="«pgvector»&#xa;Vector Store" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;competitor_reports" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_llm" value="«External REST»&#xa;OpenRouter LLM" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: Send chat message 'What are the pricing trends for CompetitorX?'" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_analyst" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+
+    <!-- Embed the user query -->
+    <mxCell id="m2" value="2: POST /api/v1/embed {text: user_question}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_embed" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="195"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: {embedding: query_vector[768]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_embed" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="230"/></mxGeometry>
+    </mxCell>
+
+    <!-- Vector similarity search -->
+    <mxCell id="m3" value="3: SELECT r.content, r.report_type,&#xa;   1 - (re.embedding &lt;=&gt; $query_vector::vector) AS cosine_sim&#xa;   FROM report_embeddings re JOIN competitor_reports r&#xa;   ORDER BY cosine_sim DESC LIMIT 5" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pgv" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="275"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: top_k_chunks [{content, cosine_sim, report_type}]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pgv" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="340"/></mxGeometry>
+    </mxCell>
+
+    <!-- optional: fetch full report context -->
+    <mxCell id="opt_ctx" value="opt [cosine_sim &gt; 0.85 — high relevance]" style="swimlane;startSize=25;fillColor=#d5e8d4;strokeColor=#82b366;fontSize:10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="360" width="800" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3b" value="3.2: SELECT content FROM competitor_reports WHERE id = $report_id" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="385"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3br" value="3.3: full_report_content" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="420"/></mxGeometry>
+    </mxCell>
+
+    <!-- Build augmented prompt -->
+    <mxCell id="m4" value="4: [build RAG prompt]&#xa;   system: CHAT_SYSTEM_PROMPT&#xa;   context: top_k_chunks + full_report (if available)&#xa;   user: original_question" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="465"/></mxGeometry>
+    </mxCell>
+
+    <!-- LLM call -->
+    <mxCell id="m5" value="5: POST openrouter.ai/api/v1/chat/completions&#xa;   {model, messages:[system, {role:user, content:rag_prompt}]}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_llm" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="510"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.1: {choices:[{message:{content: ai_answer}}]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_llm" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="555"/></mxGeometry>
+    </mxCell>
+
+    <!-- Log conversation -->
+    <mxCell id="m6" value="6: INSERT INTO chat_history&#xa;   (session_id, question, answer, sources_used, created_at)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="600"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m7" value="7: ai_answer + cited_report_sources → analyst" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_analyst" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="645"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="note" value="RAG Pattern:&#xa;Query → Embed → HNSW cosine search&#xa;→ Context injection → LLM generation&#xa;Enables: 'No hallucination' grounded answers" style="shape=note;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;align=left;" vertex="1" parent="1">
+      <mxGeometry x="80" y="710" width="260" height="85" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

@@ -1,0 +1,1056 @@
+{
+  "name": "PFE: Competitor Social Media Report",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social-media-report",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f804ad29-2377-438e-88ae-0572f1e1669b",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        256
+      ],
+      "webhookId": "463a6fe6-f621-4319-8e47-0d2cd4a34020",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate & extract query params from webhook body\nconst body = $input.first().json.body ?? {};\n\n// const platform  = body.platform  ?? null;\nconst domain = body.domain ?? null;\nconst name = body.name ?? null;\nconst competitor_id = body.competitor_id ?? null;\n\nreturn [{ json: { domain, name, competitor_id } }];"
+      },
+      "id": "59eed410-f5d4-4dec-aa8f-282ba72e45f6",
+      "name": "Validate Params",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -960,
+        256
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"error\",\n  \"reason\": \"could not find competitor with the following parameters\",\n  \"parameters\": {{ JSON.stringify($('Validate Params').item.json) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        32,
+        288
+      ],
+      "id": "4f90719f-4b9e-49d8-a9e8-91f7d8015837",
+      "name": "Respond with error",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8c3062ac-6b88-4a95-9a20-9f2c2b2d100d",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -272,
+        128
+      ],
+      "id": "530678f4-1539-41fb-8620-4b920075be94",
+      "name": "If competitor exists",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "competitors",
+          "mode": "list",
+          "cachedResultName": "competitors"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "id",
+              "value": "={{ $json.competitor_id }}"
+            },
+            {
+              "column": "domain",
+              "condition": "LIKE",
+              "value": "={{ $json.domain }}"
+            },
+            {
+              "column": "name",
+              "condition": "LIKE",
+              "value": "={{ $json.name }}"
+            }
+          ]
+        },
+        "combineConditions": "OR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -464,
+        128
+      ],
+      "id": "0980ffcb-7cfd-4b8e-89e5-51039314e2ce",
+      "name": "Find competitor",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "X-Generated-By",
+                "value": "n8n-emtop-ci"
+              }
+            ]
+          }
+        }
+      },
+      "id": "2b9669bd-0837-49b5-bb7a-d14fe580e3a2",
+      "name": "Respond with All competitors",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        -272,
+        368
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_social_score",
+        "options": {}
+      },
+      "id": "07fa850f-b128-4902-920c-7d9f3be8d788",
+      "name": "Query All Competitors",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -464,
+        368
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "9dfdb1ab-8fa2-4dac-b4d7-555b1e3c2c03",
+              "leftValue": "={{ $json.domain }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ec54692c-1204-4baf-8b36-3fe429ded7cf",
+              "leftValue": "={{ $json.displayName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "446b835a-d588-4d24-b0c3-0ba32214d05c",
+              "leftValue": "={{ $json.competitor_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -752,
+        256
+      ],
+      "id": "de45acdb-ede2-4923-9129-c34ee18cf295",
+      "name": "If body has query params",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Evaluate the following competitor social media presence.\n\n==================================================\nSOCIAL ACCOUNTS INFORMATION\n==================================================\n\nrating: -1 (means rating is unavailable)\n\n{{ $('Query Social media accounts').all().map(el => el.json).toJsonString() }}\n\n==================================================\nCURRENT COMPETITIVE SOCIAL SCORES\n==================================================\n\n{{ $('Query social media Scores').all().map(el => el.json).toJsonString() }}\n\nInterpretation:\n- score = overall social competitiveness\n- engagement_score = audience interaction quality\n- reach_score = audience visibility and size\n- activity_score = posting consistency\n- growth_score = audience growth strength\n\n==================================================\nTIME SERIES ANALYTICS\n==================================================\n\n{{ $('Query social time series').all().map(el => el.json).toJsonString() }}\n\nInterpret:\n- momentum\n- volatility\n- stability_score\n- score_delta\n- score_acceleration\n- composite_score\n- trend_direction\n- momentum_state\n\n==================================================\nFORECAST MODELS\n==================================================\n\nLINEAR REGRESSION FORECAST:\n{{ $('fetch social forecast regression').all().map(el => el.json).toJsonString() }}\n\nMOMENTUM FORECAST:\n{{ $('fetch social forecast momentum').all().map(el => el.json).toJsonString() }}\n\nSMOOTHED FORECAST:\n{{ $('fetch social forecast smoothed').all().map(el => el.json).toJsonString() }}\n\nAnalyze:\n- future trajectory\n- sustainability\n- strategic momentum\n- growth stability\n- likely future competitive position\n\n==================================================\nRECENT FACEBOOK POSTS\n==================================================\n\n{{ $('fetch recent 5 facebook posts')?.all()?.map(el => el.json)?.toJsonString() }}\n\n==================================================\nRECENT INSTAGRAM POSTS\n==================================================\n\n{{ $('fetch recent 5 instagram posts')?.all()?.map(el => el.json)?.toJsonString() }}\n\nAnalyze:\n- marketing themes\n- promotional behavior\n- campaign patterns\n- product focus\n- content repetition\n- engagement style\n- sales orientation\n- branding consistency\n- target audience\n- platform-specific strategy differences\n\nReturn structured JSON only.",
+        "options": {
+          "systemMessage": "You are a senior competitive intelligence analyst specialized in evaluating e-commerce and retail brands through social media analytics, behavioral analysis, and time-series performance interpretation.\n\nYou are given:\n- social account metadata\n- aggregated engagement metrics\n- historical performance analytics\n- forecasting models\n- recent social media posts\n\nYour objective is to produce a high-quality strategic evaluation of the competitor’s social media presence, marketing maturity, audience engagement effectiveness, content strategy, growth trajectory, and competitive threat level.\n\nYou must behave like a:\n- social media strategist\n- brand analyst\n- performance marketing consultant\n- competitive intelligence expert\n\nYou must interpret both:\n1. Quantitative metrics\n2. Qualitative content patterns\n\nYou are NOT simply summarizing data.\nYou are diagnosing the competitor’s marketing effectiveness and strategic behavior.\n\n--------------------------------------------------\nMETRIC INTERPRETATION GUIDE\n--------------------------------------------------\n\nThe following metrics are provided and must be interpreted carefully:\n\n1. score\nComposite normalized social performance score.\nRepresents overall social competitiveness.\n\nHigher means:\n- stronger engagement\n- stronger reach\n- stronger activity\n- stronger growth\n\n2. engagement_score\nNormalized engagement quality score.\n\nRepresents:\n- how actively the audience interacts with posts\n- relative engagement strength versus competitors\n\nHigh engagement_score with low followers may indicate:\n- strong content resonance\n- loyal audience\n- niche authority\n\n3. reach_score\nNormalized audience size score.\n\nRepresents:\n- brand visibility\n- social reach potential\n\nHigh reach but weak engagement may indicate:\n- inactive audience\n- inflated audience\n- weak content strategy\n\n4. activity_score\nNormalized posting frequency score.\n\nRepresents:\n- publishing consistency\n- content output intensity\n\nLow activity may indicate:\n- weak content operations\n- abandoned social strategy\n- low marketing investment\n\n5. growth_score\nNormalized audience growth score.\n\nRepresents:\n- momentum\n- brand traction\n- acquisition performance\n\nHigh growth indicates:\n- expanding visibility\n- successful campaigns\n- increasing market attention\n\n--------------------------------------------------\nTIME SERIES ANALYTICS\n--------------------------------------------------\n\nThe following historical analytics are also provided:\n\n1. momentum\nAverage recent score change.\n\nPositive momentum:\n- improving competitive position\n\nNegative momentum:\n- declining effectiveness\n\n2. volatility\nMeasures instability in performance.\n\nHigh volatility:\n- inconsistent campaigns\n- unstable audience behavior\n- erratic marketing execution\n\nLow volatility:\n- stable operations\n- consistent branding\n\n3. stability_score\nInverse volatility score.\n\nHigher means:\n- reliable execution\n- consistent strategy\n\n4. score_delta\nRecent score change.\n\n5. score_acceleration\nMeasures whether growth itself is accelerating or slowing down.\n\nPositive acceleration:\n- increasing strategic effectiveness\n\nNegative acceleration:\n- weakening momentum\n\n6. composite_score\nBlended metric using:\n- current score\n- momentum\n- stability\n\nRepresents overall strategic social strength.\n\n--------------------------------------------------\nFORECAST MODELS\n--------------------------------------------------\n\nForecasts are generated using:\n- linear regression\n- momentum extrapolation\n- smoothing models\n\nYou must analyze:\n- whether future trajectory appears positive or negative\n- whether growth is sustainable\n- whether the brand is stagnating\n- whether momentum appears artificial or organic\n\nIf all forecast models predict decline:\nmention strategic weakness.\n\nIf forecasts diverge:\nmention uncertainty or instability.\n\n--------------------------------------------------\nCONTENT ANALYSIS REQUIREMENTS\n--------------------------------------------------\n\nYou will also receive recent Facebook and Instagram posts.\n\nYou must identify:\n- recurring themes\n- promotional intensity\n- marketing tone\n- product categories\n- sales tactics\n- campaign behavior\n- branding consistency\n- educational vs transactional content\n- repetition patterns\n- likely business objectives\n\nYou must detect whether the competitor focuses on:\n- discounts\n- product launches\n- awareness\n- trust building\n- urgency\n- direct conversion\n- catalog showcasing\n- seasonal promotions\n\nYou must analyze:\n- content diversity\n- creativity\n- platform adaptation\n- audience targeting\n\n--------------------------------------------------\nIMPORTANT RULES\n--------------------------------------------------\n\n- Do not hallucinate unavailable data.\n- Do not invent campaign success.\n- Mention weak engagement clearly if detected.\n- Mention audience inefficiency if follower count is large but engagement is weak.\n- Mention stagnation if momentum is weak.\n- Mention instability if volatility is high.\n- Mention operational maturity if posting consistency is strong.\n- Infer likely business strategy from behavior patterns.\n- Mention whether the account appears professionally managed.\n- Mention whether content appears repetitive or low-effort.\n- Mention whether the brand relies heavily on sales-oriented messaging.\n\nYou must provide:\n- strategic insights\n- strengths\n- weaknesses\n- competitive threat assessment\n- future outlook\n\nReturn valid structured JSON only.\nNo markdown.\nNo explanations outside JSON.\n\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"account_overview\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"platform\": {\n          \"type\": \"string\",\n          \"example\": \"facebook\"\n        },\n        \"brand_positioning\": {\n          \"type\": \"string\",\n          \"example\": \"Affordable online retailer focused on DIY tools, home improvement, and hardware products.\"\n        },\n        \"target_audience\": {\n          \"type\": \"string\",\n          \"example\": \"DIY consumers, homeowners, workshop users, and small contractors in Tunisia.\"\n        },\n        \"account_maturity\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"high\"\n        },\n        \"activity_level\": {\n          \"type\": \"string\",\n          \"enum\": [\"inactive\", \"low\", \"moderate\", \"high\"],\n          \"example\": \"moderate\"\n        },\n        \"content_diversity\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"medium\"\n        },\n        \"branding_consistency\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"high\"\n        }\n      },\n      \"required\": [\n        \"platform\",\n        \"brand_positioning\",\n        \"target_audience\",\n        \"account_maturity\",\n        \"activity_level\",\n        \"content_diversity\",\n        \"branding_consistency\"\n      ]\n    },\n\n    \"engagement_analysis\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"engagement_quality\": {\n          \"type\": \"string\",\n          \"enum\": [\"poor\", \"average\", \"strong\"],\n          \"example\": \"poor\"\n        },\n        \"audience_responsiveness\": {\n          \"type\": \"string\",\n          \"example\": \"Audience interaction is limited despite a relatively large follower base.\"\n        },\n        \"engagement_efficiency\": {\n          \"type\": \"string\",\n          \"example\": \"Low engagement per follower suggests weak content resonance.\"\n        },\n        \"follower_to_engagement_alignment\": {\n          \"type\": \"string\",\n          \"example\": \"Follower count appears disproportionately high compared to interaction levels.\"\n        },\n        \"community_interaction_level\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"low\"\n        }\n      },\n      \"required\": [\n        \"engagement_quality\",\n        \"audience_responsiveness\",\n        \"engagement_efficiency\",\n        \"follower_to_engagement_alignment\",\n        \"community_interaction_level\"\n      ]\n    },\n\n    \"content_strategy\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"primary_content_types\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          },\n          \"example\": [\n            \"product promotion\",\n            \"new arrivals\",\n            \"catalog showcasing\"\n          ]\n        },\n        \"dominant_marketing_style\": {\n          \"type\": \"string\",\n          \"example\": \"Direct promotional marketing focused on showcasing new tools and products.\"\n        },\n        \"posting_pattern\": {\n          \"type\": \"string\",\n          \"example\": \"Irregular posting cadence with bursts of promotional product posts.\"\n        },\n        \"promotional_intensity\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"high\"\n        },\n        \"educational_content_presence\": {\n          \"type\": \"boolean\",\n          \"example\": false\n        },\n        \"brand_awareness_focus\": {\n          \"type\": \"boolean\",\n          \"example\": false\n        },\n        \"sales_driven_strategy\": {\n          \"type\": \"boolean\",\n          \"example\": true\n        },\n        \"content_repetitiveness\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"high\"\n        }\n      },\n      \"required\": [\n        \"primary_content_types\",\n        \"dominant_marketing_style\",\n        \"posting_pattern\",\n        \"promotional_intensity\",\n        \"educational_content_presence\",\n        \"brand_awareness_focus\",\n        \"sales_driven_strategy\",\n        \"content_repetitiveness\"\n      ]\n    },\n\n    \"recent_post_analysis\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"publish_time\": {\n            \"type\": \"string\",\n            \"format\": \"date-time\",\n            \"example\": \"2026-04-27T16:47:39Z\"\n          },\n          \"main_theme\": {\n            \"type\": \"string\",\n            \"example\": \"Gift-oriented toolbox promotion\"\n          },\n          \"marketing_goal\": {\n            \"type\": \"string\",\n            \"example\": \"Drive direct product sales and seasonal purchasing interest.\"\n          },\n          \"engagement_level\": {\n            \"type\": \"string\",\n            \"enum\": [\"low\", \"medium\", \"high\"],\n            \"example\": \"low\"\n          },\n          \"summary\": {\n            \"type\": \"string\",\n            \"example\": \"The post promotes a women's toolbox kit as a gift idea and includes a direct product link.\"\n          }\n        },\n        \"required\": [\n          \"publish_time\",\n          \"main_theme\",\n          \"marketing_goal\",\n          \"engagement_level\",\n          \"summary\"\n        ]\n      }\n    },\n\n    \"detected_patterns\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"example\": [\n        \"Strong focus on product catalog promotion.\",\n        \"Frequent use of direct sales-oriented wording.\",\n        \"Limited storytelling or educational content.\"\n      ]\n    },\n\n    \"strengths\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"example\": [\n        \"Large follower base increases brand visibility.\",\n        \"Consistent focus on product availability and new arrivals.\",\n        \"Clear commercial intent in posts.\"\n      ]\n    },\n\n    \"weaknesses\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"example\": [\n        \"Very low engagement relative to audience size.\",\n        \"Content strategy lacks diversity.\",\n        \"Minimal community interaction and discussion.\"\n      ]\n    },\n\n    \"competitive_assessment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"social_media_effectiveness\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"medium\"\n        },\n        \"brand_visibility\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"high\"\n        },\n        \"marketing_execution_quality\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"medium\"\n        },\n        \"audience_growth_potential\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"medium\"\n        },\n        \"overall_competitor_threat\": {\n          \"type\": \"string\",\n          \"enum\": [\"low\", \"medium\", \"high\"],\n          \"example\": \"medium\"\n        }\n      },\n      \"required\": [\n        \"social_media_effectiveness\",\n        \"brand_visibility\",\n        \"marketing_execution_quality\",\n        \"audience_growth_potential\",\n        \"overall_competitor_threat\"\n      ]\n    },\n\n    \"strategic_insights\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"likely_business_objective\": {\n          \"type\": \"string\",\n          \"example\": \"Increase direct e-commerce sales through continuous product exposure.\"\n        },\n        \"content_strategy_summary\": {\n          \"type\": \"string\",\n          \"example\": \"The account relies heavily on repetitive product promotion with limited engagement-oriented or educational content.\"\n        },\n        \"recommended_counter_strategy\": {\n          \"type\": \"string\",\n          \"example\": \"Differentiate through higher-quality educational content, stronger storytelling, and more community interaction.\"\n        }\n      },\n      \"required\": [\n        \"likely_business_objective\",\n        \"content_strategy_summary\",\n        \"recommended_counter_strategy\"\n      ]\n    },\n\n    \"overall_summary\": {\n      \"type\": \"string\",\n      \"example\": \"The competitor maintains a visible and commercially focused social media presence, but engagement efficiency and content diversity remain weak. The strategy is heavily sales-driven with limited audience interaction.\"\n    }\n  },\n\n  \"required\": [\n    \"account_overview\",\n    \"engagement_analysis\",\n    \"content_strategy\",\n    \"recent_post_analysis\",\n    \"detected_patterns\",\n    \"strengths\",\n    \"weaknesses\",\n    \"competitive_assessment\",\n    \"strategic_insights\",\n    \"overall_summary\"\n  ]\n}",
+          "maxIterations": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1888,
+        -80
+      ],
+      "id": "8a8f91ad-acb5-4693-91d9-e45a0b73a933",
+      "name": "AI Agent",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "model": "google/gemma-4-31b-it",
+        "options": {
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        128
+      ],
+      "id": "aff35d62-740d-4ee2-8eba-8c875d25705b",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "omzfgpSOq5dDgqZu",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\" />\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\n<title>Competitor Social Media Analysis</title>\n\n        <style>\n            * {\n                margin: 0;\n                padding: 0;\n                box-sizing: border-box;\n            }\n\n            :root {\n                --bg: #f3f4f6;\n\n                --white: #ffffff;\n\n                --text-main: #111827;\n                --text-muted: #6b7280;\n\n                --border: #e5e7eb;\n\n                --hero-gradient: linear-gradient(135deg, #111827, #1f2937);\n\n                --primary: #2563eb;\n\n                --blue-soft: #eff6ff;\n                --blue-soft-border: #bfdbfe;\n\n                --green: #16a34a;\n                --green-soft: #dcfce7;\n\n                --yellow: #d97706;\n                --yellow-soft: #fef3c7;\n\n                --red: #dc2626;\n                --red-soft: #fee2e2;\n\n                --purple: #7c3aed;\n                --purple-soft: #ede9fe;\n\n                --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);\n\n                --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);\n            }\n\n            body {\n                font-family: Arial, Helvetica, sans-serif;\n                background: var(--bg);\n                color: var(--text-main);\n                padding: 20px;\n                line-height: 1.7;\n            }\n\n            /* MAIN REPORT */\n\n            .container {\n                max-width: 1200px;\n                margin: auto;\n            }\n\n            .report {\n                background: var(--white);\n                border-radius: 18px;\n                overflow: hidden;\n                box-shadow: var(--shadow);\n            }\n\n            /* HERO */\n\n            .header {\n                background: var(--hero-gradient);\n                color: white;\n                padding: 48px;\n            }\n\n            .header h1 {\n                font-size: 42px;\n                margin-bottom: 14px;\n                font-weight: bold;\n            }\n\n            .header p {\n                color: rgba(255, 255, 255, 0.84);\n                max-width: 850px;\n                font-size: 16px;\n            }\n\n            /* SECTIONS */\n\n            .section {\n                /*padding: 40px;*/\n                border-bottom: 1px solid var(--border);\n            }\n\n            .section:last-child {\n                border-bottom: 0;\n            }\n\n            .section-title {\n                font-size: 28px;\n                margin-bottom: 28px;\n                color: var(--text-main);\n            }\n\n            .post-card {\n                background: white;\n\n                /*border: 1px solid #e5e7eb;*/\n\n                border-radius: 18px;\n\n                padding: 24px;\n\n                margin-bottom: 22px;\n\n                /*box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);*/\n\n                /*transition:\n                    transform 0.2s ease,\n                    box-shadow 0.2s ease;*/\n            }\n\n            .post-card:last-child {\n                margin-bottom: 0;\n            }\n\n            .post-date {\n                display: inline-flex;\n\n                align-items: center;\n\n                gap: 8px;\n\n                /*padding: 8px 14px;*/\n\n                margin-bottom: 18px;\n\n                /*background: linear-gradient(\n                    135deg,\n                    rgba(37, 99, 235, 0.08),\n                    rgba(59, 130, 246, 0.04)\n                );*/\n\n                /*border: 1px solid rgba(37, 99, 235, 0.12);*/\n\n                /*border-radius: 12px;*/\n\n                color: #414141;\n\n                font-size: 12px;\n\n                font-weight: 500;\n\n                letter-spacing: 0.06em;\n\n                text-transform: uppercase;\n\n                /*box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);*/\n\n                width: fit-content;\n            }\n\n            .post-theme {\n                font-size: 22px;\n\n                font-weight: bold;\n\n                color: #111827;\n\n                margin-bottom: 18px;\n\n                line-height: 1.4;\n            }\n\n            .post-summary {\n                font-size: 15px;\n\n                line-height: 1.8;\n\n                color: #374151;\n\n                margin-bottom: 18px;\n            }\n\n            .post-meta {\n                display: flex;\n\n                flex-wrap: wrap;\n\n                gap: 10px;\n\n                margin-top: 18px;\n            }\n\n            .post-tag {\n                background: #f3f4f6;\n\n                color: #374151;\n\n                padding: 8px 14px;\n\n                border-radius: 999px;\n\n                font-size: 12px;\n\n                font-weight: bold;\n\n                text-transform: uppercase;\n            }\n\n            .post-tag.promotional {\n                background: #fee2e2;\n\n                color: #991b1b;\n            }\n\n            .post-tag.product-launch {\n                background: #ede9fe;\n\n                color: #6d28d9;\n            }\n\n            .post-tag.discount {\n                background: #dcfce7;\n\n                color: #166534;\n            }\n\n            .post-tag.engagement {\n                background: #eff6ff;\n\n                color: #1d4ed8;\n            }\n\n            .post-engagement {\n                display: grid;\n\n                grid-template-columns: repeat(3, 1fr);\n\n                gap: 14px;\n\n                margin-top: 22px;\n            }\n\n            .engagement-box {\n                background: #f9fafb;\n\n                border: 1px solid #e5e7eb;\n\n                border-radius: 14px;\n\n                padding: 16px;\n\n                text-align: center;\n            }\n\n            .engagement-label {\n                font-size: 12px;\n\n                text-transform: uppercase;\n\n                color: #6b7280;\n\n                margin-bottom: 8px;\n            }\n\n            .engagement-value {\n                font-size: 22px;\n\n                font-weight: bold;\n\n                color: #111827;\n            }\n\n            @media (max-width: 700px) {\n                .post-engagement {\n                    grid-template-columns: 1fr;\n                }\n\n                .post-theme {\n                    font-size: 18px;\n                }\n            }\n\n            /* GRID */\n\n            .grid {\n                margin-top: 50px;\n                display: grid;\n                grid-template-columns: repeat(2, 1fr);\n                gap: 24px;\n            }\n\n            .two-column {\n                display: grid;\n                grid-template-columns: repeat(2, 1fr);\n                gap: 24px;\n            }\n\n            /* CARD */\n\n            .card {\n                background: #fafafa;\n                border: 1px solid var(--border);\n                border-radius: 18px;\n                padding: 24px;\n                box-shadow: var(--card-shadow);\n            }\n\n            .card h2 {\n                font-size: 22px;\n                margin-bottom: 22px;\n                color: var(--text-main);\n            }\n\n            .card h3 {\n                font-size: 18px;\n                margin-bottom: 12px;\n            }\n\n            [class=\"card section\"] {\n                margin-top: 35px;\n            }\n\n            [class=\"two-column section\"] {\n                margin-top: 35px;\n            }\n\n            .summary-box {\n                margin-top: 35px;\n            }\n\n            /* METRICS */\n\n            .metric {\n                margin-bottom: 22px;\n            }\n\n            .metric:last-child {\n                margin-bottom: 0;\n            }\n\n            .metric-label {\n                font-size: 13px;\n                text-transform: uppercase;\n                color: var(--text-muted);\n                margin-bottom: 10px;\n                letter-spacing: 0.04em;\n            }\n\n            .metric-value {\n                font-size: 16px;\n                line-height: 1.8;\n                color: var(--text-main);\n            }\n\n            /* BADGES */\n\n            .badge {\n                display: inline-block;\n                padding: 8px 14px;\n                border-radius: 999px;\n                font-size: 12px;\n                font-weight: bold;\n                text-transform: uppercase;\n            }\n\n            .high {\n                background: var(--red-soft);\n                color: #991b1b;\n            }\n\n            .medium {\n                background: #ffedd5;\n                color: #9a3412;\n            }\n\n            .low {\n                background: var(--green-soft);\n                color: #166534;\n            }\n\n            .stable {\n                background: var(--blue-soft);\n                color: #1d4ed8;\n            }\n\n            .flat {\n                background: var(--purple-soft);\n                color: #6d28d9;\n            }\n\n            /* SUMMARY */\n\n            .summary-box {\n                background: var(--blue-soft);\n                border-left: 6px solid var(--primary);\n                padding: 32px;\n                border-radius: 18px;\n                font-size: 17px;\n                line-height: 1.9;\n            }\n\n            /* INFO CARDS */\n\n            .info-box {\n                background: #f9fafb;\n            }\n\n            /* STRENGTHS */\n\n            .strength-box {\n                background: linear-gradient(\n                    135deg,\n                    rgba(22, 163, 74, 0.08),\n                    rgba(220, 252, 231, 0.7)\n                );\n\n                border: 1px solid rgba(22, 163, 74, 0.15);\n            }\n\n            /* WEAKNESSES */\n\n            .weakness-box {\n                background: linear-gradient(\n                    135deg,\n                    rgba(220, 38, 38, 0.06),\n                    rgba(254, 226, 226, 0.8)\n                );\n\n                border: 1px solid rgba(220, 38, 38, 0.14);\n            }\n\n            /* RECOMMENDATIONS */\n\n            .recommendation-card {\n                border: 1px solid var(--border);\n                border-radius: 16px;\n                padding: 24px;\n                background: white;\n                margin-bottom: 18px;\n                position: relative;\n            }\n\n            .recommendation-card strong {\n                display: inline-block;\n                margin-bottom: 10px;\n                color: var(--primary);\n                font-size: 15px;\n            }\n\n            /* LISTS */\n\n            ul {\n                margin-top: 12px;\n                padding-left: 20px;\n            }\n\n            li {\n                margin-bottom: 12px;\n                line-height: 1.7;\n            }\n\n            /* PANELS */\n\n            .highlight-card {\n                border-radius: 18px;\n                padding: 26px;\n            }\n\n            /* PRINT */\n\n            @media print {\n                body {\n                    background: white;\n                    padding: 0;\n                }\n\n                .report {\n                    box-shadow: none;\n                    border-radius: 0;\n                }\n\n                .section {\n                    page-break-inside: avoid;\n                }\n            }\n\n            /* RESPONSIVE */\n\n            @media (max-width: 900px) {\n                body {\n                    padding: 18px;\n                }\n\n                .two-column {\n                    grid-template-columns: 1fr;\n                }\n\n                .header {\n                    padding: 28px;\n                }\n\n                .header h1 {\n                    font-size: 32px;\n                }\n\n                .section {\n                    padding: 24px;\n                }\n            }\n        </style>\n</head>\n\n<body>\n\n<div class=\"container\">\n\n    <div class=\"header\">\n        <h1>{{ $('Query Social media accounts').item.json.display_name || $('Find competitor').item.json.name || $('Find competitor').item.json.domain }} - Social Media Analysis</h1>\n        <p>\n            Generated: {{ DateTime.utc().format(\"EEEE, dd MMMM yyyy HH:mm\") }}\n        </p>\n    </div>\n\n    <div class=\"grid\">\n\n        <!-- ACCOUNT OVERVIEW -->\n        <div class=\"card\">\n            <h2>Account Overview</h2>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Brand Positioning</div>\n                <div class=\"metric-value\">\n                    {{$json.output.account_overview.brand_positioning}}\n                </div>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Target Audience</div>\n                <div class=\"metric-value\">\n                    {{$json.output.account_overview.target_audience}}\n                </div>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Account Maturity</div>\n                <span class=\"badge {{$json.output.account_overview.account_maturity}}\">\n                    {{$json.output.account_overview.account_maturity}}\n                </span>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Activity Level</div>\n                <span class=\"badge {{$json.output.account_overview.activity_level}}\">\n                    {{$json.output.account_overview.activity_level}}\n                </span>\n            </div>\n\n        </div>\n\n        <!-- ENGAGEMENT -->\n        <div class=\"card\">\n            <h2>Engagement Analysis</h2>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Engagement Quality</div>\n                <span class=\"badge {{$json.output.engagement_analysis.engagement_quality}}\">\n                    {{$json.output.engagement_analysis.engagement_quality}}\n                </span>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Audience Responsiveness</div>\n                <div class=\"metric-value\">\n                    {{$json.output.engagement_analysis.audience_responsiveness}}\n                </div>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Engagement Efficiency</div>\n                <div class=\"metric-value\">\n                    {{$json.output.engagement_analysis.engagement_efficiency}}\n                </div>\n            </div>\n\n        </div>\n\n        <!-- CONTENT STRATEGY -->\n        <div class=\"card\">\n            <h2>Content Strategy</h2>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Dominant Marketing Style</div>\n                <div class=\"metric-value\">\n                    {{$json.output.content_strategy.dominant_marketing_style}}\n                </div>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Posting Pattern</div>\n                <div class=\"metric-value\">\n                    {{$json.output.content_strategy.posting_pattern}}\n                </div>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Promotional Intensity</div>\n                <span class=\"badge {{$json.output.content_strategy.promotional_intensity}}\">\n                    {{$json.output.content_strategy.promotional_intensity}}\n                </span>\n            </div>\n\n            <div class=\"section\">\n                <div class=\"metric-label\">Primary Content Types</div>\n\n                <ul>\n                  {{ $json.output.content_strategy.primary_content_types.map(item => `<li>${item}</li>`).join('') }}\n                </ul>\n            </div>\n\n        </div>\n\n        <!-- COMPETITIVE ASSESSMENT -->\n        <div class=\"card\">\n            <h2>Competitive Assessment</h2>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Social Media Effectiveness</div>\n                <span class=\"badge {{$json.output.competitive_assessment.social_media_effectiveness}}\">\n                    {{$json.output.competitive_assessment.social_media_effectiveness}}\n                </span>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Brand Visibility</div>\n                <span class=\"badge {{$json.output.competitive_assessment.brand_visibility}}\">\n                    {{$json.output.competitive_assessment.brand_visibility}}\n                </span>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Marketing Execution Quality</div>\n                <span class=\"badge {{$json.output.competitive_assessment.marketing_execution_quality}}\">\n                    {{$json.output.competitive_assessment.marketing_execution_quality}}\n                </span>\n            </div>\n\n            <div class=\"metric\">\n                <div class=\"metric-label\">Overall Competitor Threat</div>\n                <span class=\"badge {{$json.output.competitive_assessment.overall_competitor_threat}}\">\n                    {{$json.output.competitive_assessment.overall_competitor_threat}}\n                </span>\n            </div>\n\n        </div>\n\n    </div>\n\n    <!-- RECENT POSTS -->\n    <div class=\"card section\">\n        <h2>Recent Post Analysis</h2>\n        {{\n  $json.output.recent_post_analysis\n    .map(item => {\n\n      const date = new Date(item.publish_time);\n\n      const formatted = date.toLocaleDateString('en-US', {\n        weekday: 'long',\n        day: '2-digit',\n        month: 'long',\n        year: 'numeric',\n        hour: '2-digit',\n        minute: '2-digit',\n        hour12: false\n      });\n\n      return {\n        ...item,\n        publish_time: formatted\n      };\n    })\n    .map(item => `\n      <div class=\"post-card\">\n\n        <div class=\"post-date\">\n          ${item.publish_time}\n        </div>\n\n        <div class=\"post-theme\">\n          ${item.main_theme}\n        </div>\n\n        <div class=\"metric\">\n          <div class=\"metric-label\">Marketing Goal</div>\n          <div class=\"metric-value\">\n            ${item.marketing_goal}\n          </div>\n        </div>\n\n        <div class=\"metric\">\n          <div class=\"metric-label\">Engagement Level</div>\n          <span class=\"badge ${item.engagement_level}\">\n            ${item.engagement_level}\n          </span>\n        </div>\n\n        <div class=\"metric\">\n          <div class=\"metric-label\">Summary</div>\n          <div class=\"metric-value\">\n            ${item.summary}\n          </div>\n        </div>\n\n      </div>\n    `).join('')\n}}\n\n    </div>\n\n    <!-- STRENGTHS / WEAKNESSES -->\n    <div class=\"two-column section\">\n\n        <div class=\"card\">\n            <h2>Strengths</h2>\n\n            <ul>\n              {{ $json.output.strengths.map(item => `<li>${item}</li>`).join('') }}\n            </ul>\n        </div>\n\n        <div class=\"card\">\n            <h2>Weaknesses</h2>\n\n            <ul>\n              {{ $json.output.weaknesses.map(item => `<li>${item}</li>`).join('') }}\n            </ul>\n        </div>\n\n    </div>\n\n    <!-- DETECTED PATTERNS -->\n    <div class=\"card section\">\n        <h2>Detected Patterns</h2>\n\n        <ul>\n          {{ $json.output.detected_patterns.map(item => `<li>${item}</li>`).join('') }}\n        </ul>\n    </div>\n\n    <!-- STRATEGIC INSIGHTS -->\n    <div class=\"card section\">\n        <h2>Strategic Insights</h2>\n\n        <div class=\"metric\">\n            <div class=\"metric-label\">Likely Business Objective</div>\n            <div class=\"metric-value\">\n                {{$json.output.strategic_insights.likely_business_objective}}\n            </div>\n        </div>\n\n        <div class=\"metric\">\n            <div class=\"metric-label\">Content Strategy Summary</div>\n            <div class=\"metric-value\">\n                {{$json.output.strategic_insights.content_strategy_summary}}\n            </div>\n        </div>\n\n        <div class=\"metric\">\n            <div class=\"metric-label\">Recommended Counter Strategy</div>\n            <div class=\"metric-value\">\n                {{$json.output.strategic_insights.recommended_counter_strategy}}\n            </div>\n        </div>\n\n    </div>\n\n    <!-- OVERALL SUMMARY -->\n    <div class=\"summary-box\">\n        <h2>Executive Summary</h2>\n\n        <p>\n            {{$json.output.overall_summary}}\n        </p>\n    </div>\n\n</div>\n\n</body>\n</html>"
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2416,
+        -80
+      ],
+      "id": "f0ce5294-26a7-445a-8516-6535e06ebced",
+      "name": "HTML",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.html }}",
+        "destinationKey": "markdown",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        2624,
+        -80
+      ],
+      "id": "349cbc95-2a66-4d0d-a191-08babd5d3f86",
+      "name": "Markdown",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.output_format || \"\" }}",
+                    "rightValue": "html",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "1356cf95-e0ef-4842-bd81-bff613c7222f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "HTML"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "8a59da70-0209-4b2c-9a05-570038f214e9",
+                    "leftValue": "={{ $('Webhook').item.json.body.output_format || \"\" }}",
+                    "rightValue": "markdown",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Markdown"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "55d51580-79d8-4594-ad52-abf3e85444c3",
+                    "leftValue": "={{ $('Webhook').item.json.body.output_format || \"\" }}",
+                    "rightValue": "json",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "JSON"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "Default"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2832,
+        -112
+      ],
+      "id": "23cc247c-560d-4033-bf35-5a0c8a1e35fa",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $('HTML').item.json.html }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "9262d6fd-9249-4601-a0b3-743dab80078d",
+      "name": "Respond with HTML",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3184,
+        -352
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.markdown }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "f5b366a2-9a2e-418e-a6ec-eb8d2098dc10",
+      "name": "Respond with Markdown",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3184,
+        -192
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"html\": {{ $json.html.toJsonString() }},\n  \"markdown\": {{ $json.markdown.toJsonString() }}\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "7a3b534e-3a3c-4642-b5c0-ba2f548decbb",
+      "name": "Respond with JSON",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        3184,
+        -32
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "242c5717-1bd9-4e53-a1d8-b65a549daffb",
+              "name": "output",
+              "value": "={{ JSON.parse($json.output.replace(/^```json\\s*/i, '')   .replace(/```$/, '')   .trim())}}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        -80
+      ],
+      "id": "fe6fe4bd-978d-46f3-89da-f37fa395f1a5",
+      "name": "parse output",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_posts",
+          "mode": "list",
+          "cachedResultName": "social_posts"
+        },
+        "limit": 5,
+        "where": {
+          "values": [
+            {
+              "column": "account_id",
+              "value": "={{ $('Query Social media accounts').item.json.id }}"
+            },
+            {
+              "column": "platform",
+              "value": "facebook"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "publish_time",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "options": {
+          "outputColumns": [
+            "platform",
+            "text",
+            "content_type",
+            "publish_time",
+            "like_count",
+            "comment_count"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        672,
+        0
+      ],
+      "id": "0d1b1eb5-9a30-450a-80a6-2f4f99f7bcec",
+      "name": "fetch recent 5 facebook posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_posts",
+          "mode": "list",
+          "cachedResultName": "social_posts"
+        },
+        "limit": 5,
+        "where": {
+          "values": [
+            {
+              "column": "account_id",
+              "value": "={{ $('Query Social media accounts').item.json.id }}"
+            },
+            {
+              "column": "platform",
+              "value": "instagram"
+            }
+          ]
+        },
+        "sort": {
+          "values": [
+            {
+              "column": "publish_time",
+              "direction": "DESC"
+            }
+          ]
+        },
+        "options": {
+          "outputColumns": [
+            "platform",
+            "text",
+            "content_type",
+            "publish_time",
+            "like_count",
+            "comment_count"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        672,
+        -208
+      ],
+      "id": "467103ff-cef1-45bd-96d4-e22d8a30aaeb",
+      "name": "fetch recent 5 instagram posts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_social_time_series WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Find competitor').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1008,
+        -80
+      ],
+      "id": "5d925070-1371-4f44-ba25-5313573c1905",
+      "name": "Query social time series",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_social_forecast_regression WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Find competitor').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1232,
+        -80
+      ],
+      "id": "20bed19d-366c-4701-95f5-4e5b11bcec2f",
+      "name": "fetch social forecast regression",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_social_forecast_momentum WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Find competitor').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1456,
+        -80
+      ],
+      "id": "1af924b8-fb91-4908-bda2-1af4cd8cc514",
+      "name": "fetch social forecast momentum",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_social_forecast_smoothed WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Find competitor').item.json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1680,
+        -80
+      ],
+      "id": "87807693-56c3-42db-b05b-11825f66d920",
+      "name": "fetch social forecast smoothed",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "social_accounts",
+          "mode": "list",
+          "cachedResultName": "social_accounts"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "competitor_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        144,
+        -96
+      ],
+      "id": "a37d7217-b28e-41ee-946f-7b4983364a64",
+      "name": "Query Social media accounts",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM competitor_social_score WHERE competitor_id = $1;",
+        "options": {
+          "queryReplacement": "={{ $('Find competitor').item.json.id }}"
+        }
+      },
+      "id": "7e6344ca-89ca-40c1-9a23-c761205d6c17",
+      "name": "Query social media Scores",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        368,
+        -96
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate Params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Params": {
+      "main": [
+        [
+          {
+            "node": "If body has query params",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If competitor exists": {
+      "main": [
+        [
+          {
+            "node": "Query Social media accounts",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find competitor": {
+      "main": [
+        [
+          {
+            "node": "If competitor exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query All Competitors": {
+      "main": [
+        [
+          {
+            "node": "Respond with All competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If body has query params": {
+      "main": [
+        [
+          {
+            "node": "Find competitor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Query All Competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "parse output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Respond with HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with JSON",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond with JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse output": {
+      "main": [
+        [
+          {
+            "node": "HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch recent 5 facebook posts": {
+      "main": [
+        [
+          {
+            "node": "Query social time series",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch recent 5 instagram posts": {
+      "main": [
+        [
+          {
+            "node": "Query social time series",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query social time series": {
+      "main": [
+        [
+          {
+            "node": "fetch social forecast regression",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch social forecast regression": {
+      "main": [
+        [
+          {
+            "node": "fetch social forecast momentum",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch social forecast momentum": {
+      "main": [
+        [
+          {
+            "node": "fetch social forecast smoothed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch social forecast smoothed": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Social media accounts": {
+      "main": [
+        [
+          {
+            "node": "Query social media Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query social media Scores": {
+      "main": [
+        [
+          {
+            "node": "fetch recent 5 facebook posts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "fetch recent 5 instagram posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f96f1f08-926a-440b-94d0-615e0f353707",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "hxXt0MeMlkrEdsu34tqAR",
+  "tags": []
+}

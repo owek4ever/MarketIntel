@@ -1,0 +1,913 @@
+{
+  "name": "PFE: Companies Search Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d6be4ec6-f54f-4272-bead-d12e4e3a24c6",
+              "name": "results",
+              "value": "={{ \n  $json\n    .results\n    .map((res) => {\n    const url = /\\b((http[s]?:\\/\\/)?[a-z0-9]+(-[a-z0-9]+)*\\.)+[a-z]{2,}\\b/.exec(res.json.link || res.json.website)?.at(0);\n  return {\n    url,\n    priority: 2,\n    job_type: \"homepage_sitemap_crawl\",\n  }\n})\n}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        288
+      ],
+      "id": "8899ef0b-b6a8-4a6d-a806-5f6cb5963655",
+      "name": "Extract urls",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"results\": {{ $json.results.map((row) => ({ json: row })) }}\n}",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        928,
+        288
+      ],
+      "id": "00baeefd-0105-4b5e-a41f-cc9877f11cd3",
+      "name": "Extract search results",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.222:8080/frontier/urls/batch",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "urls",
+              "value": "={{ $json.results }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1536,
+        288
+      ],
+      "id": "440456ae-eb92-4f34-9223-965adfe98481",
+      "name": "Queue search result urls",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "google-map-search",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1616,
+        288
+      ],
+      "id": "dae2256e-1ab4-40c2-ac3c-d512ecbd87df",
+      "name": "Google map search Webhook",
+      "webhookId": "739a0ba8-0361-40ab-9e89-bef096855ef7",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "google-search",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1616,
+        464
+      ],
+      "id": "53aaf716-f1a8-4e94-ae85-1e2909588459",
+      "name": "Google search Webhook",
+      "webhookId": "739a0ba8-0361-40ab-9e89-bef096855ef7",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cd44c6d4-998b-46bb-81b2-41aa6896001f",
+              "leftValue": "={{ $json.gmap_search_result }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -704,
+        272
+      ],
+      "id": "33002d79-c3d0-4cec-941e-18fd13b632fe",
+      "name": "If not cached",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "search_cache",
+        "key": "=search_cache:gs:{{ $json.body.search_query }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        448
+      ],
+      "id": "ab949db8-86da-475f-a2af-834e951a0511",
+      "name": "Check Google search cache",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "gmap_search_result",
+        "key": "=search_cache:gmap:{{ $json.body.search_query.replaceAll(\" \", \"_\") }}-{{ $json.body.location_query.replaceAll(\" \", \"_\") }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        272
+      ],
+      "id": "f47d669c-9913-4854-8d75-8ad828ebc26e",
+      "name": "Check Gmap search cache",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cd44c6d4-998b-46bb-81b2-41aa6896001f",
+              "leftValue": "={{ $json.results }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -704,
+        448
+      ],
+      "id": "c89a78b8-49aa-4f54-9068-b67797cadbdf",
+      "name": "If cached",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=search_cache:gmap:{{ $('Google map search Webhook').item.json.body.search_query.replaceAll(\" \", \"_\") }}-{{ $('Google map search Webhook').item.json.body.location_query.replaceAll(\" \", \"_\") }}",
+        "value": "={{ JSON.stringify($json.places) }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        400,
+        144
+      ],
+      "id": "4a0e5362-2b13-466f-9ad0-6206a3b14065",
+      "name": "Cache gmap result",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=search_cache:gs:{{ $('Google search Webhook').item.json.body.search_query }}",
+        "value": "={{ $json.results.toJsonString() }}",
+        "expire": true,
+        "ttl": "={{ 60 * 60 * 2 }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        528,
+        544
+      ],
+      "id": "04c98630-8d4c-406f-ade7-6b4321a6783a",
+      "name": "Cache gs result",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "21acb25f-6259-4976-b8ba-cac07b29b1ce",
+              "leftValue": "={{ $json.body.search_query }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1408,
+        288
+      ],
+      "id": "9589eaeb-357d-41d9-a738-fc4c31ab8630",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1da2aabb-4a9a-4276-b45e-045a7fb0dddc",
+              "name": "gmap_search_result",
+              "value": "={{ JSON.parse($json.gmap_search_result) ?? [] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        272
+      ],
+      "id": "21dadc24-293e-424b-b273-92c14dc3e0e2",
+      "name": "parse cache",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/maps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q\":\"{{ $('Google map search Webhook').item.json.body.search_query }}, {{ $('Google map search Webhook').item.json.body.location_query }}\",\n  \"hl\":\"fr\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -448,
+        128
+      ],
+      "id": "3dab411e-ba50-43b3-a45d-2da93a12ec35",
+      "name": "Fetch places (page 1)",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5umuoO0iaqS8xIyv",
+          "name": "Serper DEV API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/maps",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"q\":\"{{ $('Google map search Webhook').item.json.body.search_query }}, {{ $('Google map search Webhook').item.json.body.location_query }}\",\n  \"hl\":\"fr\",\n  \"page\": 2,\n  \"ll\": \"{{ $json.ll }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "370e3265-a4e5-4ae6-ba68-e5229d34c6bf",
+      "name": "Fetch places (page 2)",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5umuoO0iaqS8xIyv",
+          "name": "Serper DEV API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1075d3c1-71e0-4553-ac14-2adc84f7f01b",
+              "name": "places",
+              "value": "={{ [...$('Fetch places (page 1)').item.json.places, ...$json.places] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        16
+      ],
+      "id": "3a9a5b22-c94d-4707-9276-7363ceaa8e80",
+      "name": "Combine pages",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3396b5b6-a0a1-4f28-8b29-60d4ea039aa5",
+              "leftValue": "={{ $('Google map search Webhook').item.json.body.add_extra_places }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "cad88389-392a-4f3a-acdb-2da7c456eca7",
+      "name": "fetch extra results ?",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4a4796c-081b-4bdf-a9e2-5f204b154fcd",
+              "name": "results",
+              "value": "={{ $json.places }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        144
+      ],
+      "id": "b4d4e34c-4524-48e6-9edc-860acb1a543a",
+      "name": "extract places",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n const socialMediaDomains = [\n    'facebook.com',\n    'fb.com',\n    'instagram.com',\n    'linkedin.com',\n    'tiktok.com',\n    'youtube.com',\n    'pinterest.com',\n    'snapchat.com',\n    'whatsapp.com',\n    't.me',\n    'telegram.org',\n     '.fr'\n  ];\n\nconst dups = new Set()\n\nfor (const item of $input.all()) {\n  item.json.results = item.json.results.filter(row => {\n    // Check if URL is missing or empty\n    if (!row.url || row.url.trim() === '' || dups.has(row.url) || socialMediaDomains.find(domain => row.url.includes(domain))) {\n      return false;\n    }\n    dups.add(row.url)\n    return true\n  })\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        288
+      ],
+      "id": "9db9baed-01fc-4c49-8c0c-4326408f3407",
+      "name": "Filter links",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7249014e-5eb7-4bbb-91f9-073e1ebb354b",
+              "leftValue": "={{ $json.body.search_query }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1408,
+        464
+      ],
+      "id": "75216001-9410-4eec-bc85-4fdc775d785a",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={\n  \"q\":{{ ($('Google search Webhook').item.json.body.search_query + \" tunisie\").toJsonString() }},\n  \"gl\":\"tn\",\n  \"hl\":\"fr\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -112,
+        544
+      ],
+      "id": "ec8f2fd7-a7b3-4f8c-9d28-f242ae439a2f",
+      "name": "google search (page 1)",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5umuoO0iaqS8xIyv",
+          "name": "Serper DEV API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={\n  \"q\":{{ $('Google search Webhook').item.json.body.search_query.toJsonString() }},\n  \"gl\":\"tn\",\n  \"hl\":\"fr\",\n  \"page\": 2\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        112,
+        544
+      ],
+      "id": "b40e2207-48dd-49d8-beaf-b2c2ddbae953",
+      "name": "google search (page 2)",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5umuoO0iaqS8xIyv",
+          "name": "Serper DEV API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1075d3c1-71e0-4553-ac14-2adc84f7f01b",
+              "name": "results",
+              "value": "={{ [...$('google search (page 1)').item.json.organic, ...$json.organic] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        544
+      ],
+      "id": "e9cfa906-36c8-4be3-b6c0-74b1a20cbe43",
+      "name": "Combine pages1",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "91d94758-c0e9-4751-b14d-dab98f452416",
+              "name": "results",
+              "value": "={{ JSON.parse($json.search_cache) ?? [] }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -896,
+        448
+      ],
+      "id": "c0b26afa-13c7-4be0-8f2a-aec0a7319da6",
+      "name": "parse cache1",
+      "executeOnce": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Extract urls": {
+      "main": [
+        [
+          {
+            "node": "Filter links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract search results": {
+      "main": [
+        [
+          {
+            "node": "Extract urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google map search Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google search Webhook": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If not cached": {
+      "main": [
+        [
+          {
+            "node": "Fetch places (page 1)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract search results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Google search cache": {
+      "main": [
+        [
+          {
+            "node": "parse cache1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Gmap search cache": {
+      "main": [
+        [
+          {
+            "node": "parse cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If cached": {
+      "main": [
+        [
+          {
+            "node": "Extract search results",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "google search (page 1)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cache gmap result": {
+      "main": [
+        [
+          {
+            "node": "extract places",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cache gs result": {
+      "main": [
+        [
+          {
+            "node": "Extract search results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Check Gmap search cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse cache": {
+      "main": [
+        [
+          {
+            "node": "If not cached",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch places (page 1)": {
+      "main": [
+        [
+          {
+            "node": "fetch extra results ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch places (page 2)": {
+      "main": [
+        [
+          {
+            "node": "Combine pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine pages": {
+      "main": [
+        [
+          {
+            "node": "Cache gmap result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch extra results ?": {
+      "main": [
+        [
+          {
+            "node": "Fetch places (page 2)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cache gmap result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract places": {
+      "main": [
+        [
+          {
+            "node": "Extract search results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter links": {
+      "main": [
+        [
+          {
+            "node": "Queue search result urls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Check Google search cache",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "google search (page 1)": {
+      "main": [
+        [
+          {
+            "node": "google search (page 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "google search (page 2)": {
+      "main": [
+        [
+          {
+            "node": "Combine pages1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine pages1": {
+      "main": [
+        [
+          {
+            "node": "Cache gs result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse cache1": {
+      "main": [
+        [
+          {
+            "node": "If cached",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "ba75e19f-75f3-411d-bb3b-6948a421f1d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "6WTXhXXtAv4f6wsxhi31Q",
+  "tags": []
+}

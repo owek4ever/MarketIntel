@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="PFE2: System Component Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=18;fontStyle=1;fontColor=#1A237E;" vertex="1" parent="1">
+      <mxGeometry x="200" y="20" width="1200" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: External Triggers ===== -->
+    <mxCell id="lyr_ext" value="External Triggers" style="swimlane;horizontal=0;startSize=30;fillColor=#FCE4EC;strokeColor=#C2185B;fontColor=#880E4F;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="30" y="80" width="160" height="300" as="geometry"/>
+    </mxCell>
+    <mxCell id="ext_analyst" value="Business Analyst&#xa;(Web Browser)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8BBD9;strokeColor=#C2185B;fontSize=11;" vertex="1" parent="lyr_ext">
+      <mxGeometry x="15" y="50" width="130" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="ext_cron" value="Cron Scheduler&#xa;(n8n Triggers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8BBD9;strokeColor=#C2185B;fontSize=11;" vertex="1" parent="lyr_ext">
+      <mxGeometry x="15" y="130" width="130" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="ext_webhook_in" value="Inbound Webhook&#xa;(Scraper → n8n)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8BBD9;strokeColor=#C2185B;fontSize=11;" vertex="1" parent="lyr_ext">
+      <mxGeometry x="15" y="210" width="130" height="50" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: Orchestration (n8n) ===== -->
+    <mxCell id="lyr_n8n" value="n8n Workflow Orchestration Layer" style="swimlane;horizontal=0;startSize=30;fillColor=#FFF3E0;strokeColor=#E65100;fontColor=#BF360C;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="220" y="80" width="340" height="900" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_company_search" value="Companies Search Workflow&#xa;(Add Target + Discover URLs)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="40" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_crawl" value="Handle Unknown Page Scrape Jobs&#xa;(Classify + Route)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="120" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_product_list" value="Handle Product List Scrape Jobs&#xa;(Extract List Items)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="200" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_product_detail" value="Handle Product Details Scrape Jobs&#xa;(Extract + Embed + Store)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="280" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_platform_report" value="Competitor Platform Report&#xa;(LLM Report Generation)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="360" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_social_report" value="Competitor Social Media Report&#xa;(LLM + Social Metrics)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="440" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_social_scrape" value="Social Media Scrape Workflow&#xa;(Facebook / Instagram / TikTok)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="520" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_vector_store" value="Add Report to Vector Store&#xa;(Qdrant Ingestion)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="600" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_chat_ai" value="Chat With AI to Extract Insights&#xa;(RAG Agent — DeepSeek V4 Flash)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#E65100;fontSize=11;fontStyle=1;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="680" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_refresh" value="Refresh Materialized Views&#xa;(Scheduled SQL)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="760" width="300" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="n8n_failed" value="Handle Failed Jobs Workflow&#xa;(DLQ + Retry Logic)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="lyr_n8n">
+      <mxGeometry x="20" y="840" width="300" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: Scraper Engine ===== -->
+    <mxCell id="lyr_scraper" value="Scraper Engine (Python / FastAPI)" style="swimlane;horizontal=0;startSize=30;fillColor=#E3F2FD;strokeColor=#1976D2;fontColor=#0D47A1;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="600" y="80" width="320" height="580" as="geometry"/>
+    </mxCell>
+    <mxCell id="sc_api" value="FastAPI Ingestion API&#xa;POST /frontier/urls&#xa;GET /frontier/urls/{id}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="lyr_scraper">
+      <mxGeometry x="20" y="40" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="sc_frontier" value="Frontier Manager&#xa;(Redis ZSET Priority Queue&#xa;+ Seen-URL Dedup Bloom)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="lyr_scraper">
+      <mxGeometry x="20" y="130" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="sc_worker" value="Worker Loop&#xa;(Concurrent Asyncio Tasks&#xa;Configurable: 3 workers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="lyr_scraper">
+      <mxGeometry x="20" y="220" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="sc_browser" value="Browser Pool&#xa;(Playwright Chromium&#xa;2 Browsers × 4 Contexts)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="lyr_scraper">
+      <mxGeometry x="20" y="310" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="sc_classifier" value="Page Classifier&#xa;(AI Heuristic: URL + JSON-LD&#xa;+ DOM Signals + Pagination)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1976D2;fontSize=11;fontStyle=1;" vertex="1" parent="lyr_scraper">
+      <mxGeometry x="20" y="400" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="sc_extractors" value="Extractors&#xa;(product_detail / product_list&#xa;/ text_content / crawler / SEO)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="lyr_scraper">
+      <mxGeometry x="20" y="490" width="280" height="65" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: Proxy Manager ===== -->
+    <mxCell id="lyr_proxy" value="Proxy Manager (Python TCP)" style="swimlane;horizontal=0;startSize=30;fillColor=#F3E5F5;strokeColor=#7B1FA2;fontColor=#4A148C;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="600" y="700" width="320" height="280" as="geometry"/>
+    </mxCell>
+    <mxCell id="px_server" value="TCP Proxy Server&#xa;(Port 8888 — asyncio)&#xa;CONNECT + GET Method Handling" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;fontSize=11;" vertex="1" parent="lyr_proxy">
+      <mxGeometry x="20" y="40" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="px_store" value="Proxy Store&#xa;(Redis — Usage Tracking&#xa;+ Health Scoring + Rate Limits)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;fontSize=11;" vertex="1" parent="lyr_proxy">
+      <mxGeometry x="20" y="130" width="280" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="px_n8n_sync" value="n8n Sync Client&#xa;(Pulls Proxy List via Webhook&#xa;Every 300s)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;fontSize=11;" vertex="1" parent="lyr_proxy">
+      <mxGeometry x="20" y="210" width="280" height="50" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: Vector Embedding Service ===== -->
+    <mxCell id="lyr_embed" value="Vector Embedding Service (Python / FastAPI)" style="swimlane;horizontal=0;startSize=30;fillColor=#E8F5E9;strokeColor=#388E3C;fontColor=#1B5E20;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="960" y="80" width="310" height="280" as="geometry"/>
+    </mxCell>
+    <mxCell id="emb_api" value="FastAPI Endpoint&#xa;POST /api/v1/products/embed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;fontSize=11;" vertex="1" parent="lyr_embed">
+      <mxGeometry x="20" y="40" width="270" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="emb_factory" value="EmbeddingFactory&#xa;(Singleton Provider Pattern)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;fontSize=11;" vertex="1" parent="lyr_embed">
+      <mxGeometry x="20" y="120" width="270" height="50" as="geometry"/>
+    </mxCell>
+    <mxCell id="emb_local" value="LocalEmbeddingProvider&#xa;(intfloat/multilingual-e5-base&#xa;via SentenceTransformers)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#A5D6A7;strokeColor=#388E3C;fontSize=11;fontStyle=1;" vertex="1" parent="lyr_embed">
+      <mxGeometry x="20" y="195" width="270" height="65" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: Data Stores ===== -->
+    <mxCell id="lyr_data" value="Data Storage Layer" style="swimlane;horizontal=0;startSize=30;fillColor=#E1F5FE;strokeColor=#0277BD;fontColor=#01579B;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="960" y="400" width="310" height="580" as="geometry"/>
+    </mxCell>
+    <mxCell id="db_postgres" value="PostgreSQL + pgvector&#xa;(TimescaleDB Extensions)&#xa;Tables: competitors, products,&#xa;price_history, seo_scores,&#xa;social_metrics, reports" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#B3E5FC;strokeColor=#0277BD;fontSize=11;" vertex="1" parent="lyr_data">
+      <mxGeometry x="20" y="40" width="270" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="db_redis" value="Redis 7&#xa;(Frontier ZSET + In-flight Set&#xa;+ Seen-URL Set + Proxy Store&#xa;+ Chat Memory)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#B3E5FC;strokeColor=#0277BD;fontSize=11;" vertex="1" parent="lyr_data">
+      <mxGeometry x="20" y="175" width="270" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="db_qdrant" value="Qdrant Vector Database&#xa;Collection: reports&#xa;(HNSW Index — cosine similarity&#xa;BGE-M3 768-dim embeddings)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#B3E5FC;strokeColor=#0277BD;fontSize=11;" vertex="1" parent="lyr_data">
+      <mxGeometry x="20" y="310" width="270" height="105" as="geometry"/>
+    </mxCell>
+    <mxCell id="db_matviews" value="Materialized Views&#xa;(competitor_scores,&#xa;social_metrics_latest,&#xa;seo_scores_summary)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#81D4FA;strokeColor=#0277BD;fontSize=11;" vertex="1" parent="lyr_data">
+      <mxGeometry x="20" y="445" width="270" height="80" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== LAYER: External AI Services ===== -->
+    <mxCell id="lyr_ai_ext" value="External AI / Data Services" style="swimlane;horizontal=0;startSize=30;fillColor=#FFF9C4;strokeColor=#F57F17;fontColor=#E65100;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="1310" y="80" width="280" height="330" as="geometry"/>
+    </mxCell>
+    <mxCell id="ai_openrouter" value="OpenRouter API&#xa;(DeepSeek V4 Flash / R1)&#xa;LLM Chat Completions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="lyr_ai_ext">
+      <mxGeometry x="20" y="40" width="240" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="ai_hf" value="Hugging Face Hub&#xa;(Model Download&#xa;intfloat/multilingual-e5-base)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="lyr_ai_ext">
+      <mxGeometry x="20" y="130" width="240" height="65" as="geometry"/>
+    </mxCell>
+    <mxCell id="ai_serper" value="Serper API&#xa;(Google Search Discovery&#xa;for Competitor Lookup)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="lyr_ai_ext">
+      <mxGeometry x="20" y="230" width="240" height="65" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== CONNECTIONS ===== -->
+    <!-- Ext triggers → n8n -->
+    <mxCell id="ce1" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#C2185B;strokeWidth=1.5;" edge="1" parent="1" source="ext_analyst" target="n8n_chat_ai">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce2" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#C2185B;strokeWidth=1.5;" edge="1" parent="1" source="ext_cron" target="n8n_platform_report">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce3" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#C2185B;strokeWidth=1.5;" edge="1" parent="1" source="ext_webhook_in" target="n8n_crawl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Scraper API -->
+    <mxCell id="ce4" value="REST HTTP&#xa;POST /frontier/urls" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="n8n_company_search" target="sc_api">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Scraper → n8n webhooks -->
+    <mxCell id="ce5" value="Webhook HTTP POST" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1976D2;strokeWidth=2;fontSize=10;" edge="1" parent="1" source="sc_worker" target="n8n_crawl">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Scraper → Proxy -->
+    <mxCell id="ce6" value="HTTP CONNECT&#xa;(Proxy Protocol)" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1976D2;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="sc_browser" target="px_server">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Embedding Service -->
+    <mxCell id="ce7" value="REST HTTP&#xa;POST /api/v1/products/embed" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="n8n_product_detail" target="emb_api">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Qdrant -->
+    <mxCell id="ce8" value="Qdrant HTTP API" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="n8n_vector_store" target="db_qdrant">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → PostgreSQL -->
+    <mxCell id="ce9" value="SQL (PostgreSQL wire)" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="n8n_refresh" target="db_postgres">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Redis -->
+    <mxCell id="ce10" value="Redis Protocol" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="n8n_chat_ai" target="db_redis">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n AI → OpenRouter -->
+    <mxCell id="ce11" value="HTTPS REST" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="n8n_chat_ai" target="ai_openrouter">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Proxy → Redis -->
+    <mxCell id="ce12" value="Redis Protocol" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7B1FA2;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="px_store" target="db_redis">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Scraper Frontier → Redis -->
+    <mxCell id="ce13" value="Redis ZSET / SET" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1976D2;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="sc_frontier" target="db_redis">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Embed → HF -->
+    <mxCell id="ce14" value="HTTPS (model download)" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#388E3C;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="emb_local" target="ai_hf">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Prometheus monitoring -->
+    <mxCell id="db_prometheus" value="Prometheus&#xa;(Port 9090 — Metrics)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#CFD8DC;strokeColor=#455A64;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="1010" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="ce15" value="HTTP /metrics" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=1.5;fontSize=10;" edge="1" parent="1" source="sc_worker" target="db_prometheus">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

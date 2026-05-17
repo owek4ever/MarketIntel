@@ -1,0 +1,266 @@
+{
+  "name": "PFE: Handle Failed Jobs Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "scrape_started",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -48,
+        16
+      ],
+      "id": "aa783ab1-ad64-4342-85ac-ee247956f427",
+      "name": "Failed jobs",
+      "webhookId": "21ea8eb3-29a0-4525-829b-64f9eda1db06"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "scheduled_urls",
+          "mode": "list",
+          "cachedResultName": "scheduled_urls"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "priority": "={{ $json.body.priority }}",
+            "retries": "={{ $json.body.retries }}",
+            "url": "={{ $json.body.url }}",
+            "domain": "={{ $json.body.domain }}",
+            "status": "={{ $json.body.status }}",
+            "queued_at": "={{ DateTime.fromSeconds($json.body.queued_at) }}",
+            "started_at": "={{ DateTime.fromSeconds($json.body.started_at) }}",
+            "last_run_at": "={{ DateTime.fromSeconds($json.body.started_at) }}",
+            "job_type": "={{ $json.body?.metadata?.page_type ?? $json.body.job_type }}",
+            "metadata": "={\n  \"status_code\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.httpStatusCode }},\n  \"dom_size\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.domSize }},\n  \"page_size\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.htmlPageSize }},\n  \"dom_interactive\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_interactive }},\n  \"dom_complete\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_complete }},\n  \"first_paint\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.first_paint }},\n  \"resource_count\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.resourceCount }},\n  \"ttfb\": {{ $json.body.seo_report.seo_attributes.TechnicalSEOAnalyzer.siteLoadingSpeedTest.ttfb_seconds }}\n}",
+            "last_error": "=",
+            "id": "={{ $json.body.id }}",
+            "last_failure_at": "={{ null }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retries",
+              "displayName": "retries",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "queued_at",
+              "displayName": "queued_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "finished_at",
+              "displayName": "finished_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "next_run_at",
+              "displayName": "next_run_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_run_at",
+              "displayName": "last_run_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_success_at",
+              "displayName": "last_success_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_failure_at",
+              "displayName": "last_failure_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_error",
+              "displayName": "last_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_type",
+              "displayName": "job_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "metadata_hash",
+              "displayName": "metadata_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "metadata",
+              "displayName": "metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        176,
+        16
+      ],
+      "id": "d21466bc-512a-4959-8c5f-e91c22b9635f",
+      "name": "Append failed job",
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Failed jobs": {
+      "main": [
+        [
+          {
+            "node": "Append failed job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "48f74e7a-5365-45b8-978c-5c46c70ac5d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "wxlB81kbXQosDroc0LTD2",
+  "tags": []
+}

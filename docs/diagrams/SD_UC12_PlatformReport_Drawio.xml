@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1050" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-12: Generate Competitor Platform Report — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2300" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_analyst" value="«Human»&#xa;Competitive Analyst" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="900" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n: Platform Report" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="900" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="900" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_llm" value="«External REST»&#xa;OpenRouter LLM API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="900" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_embed" value="«FastAPI»&#xa;Vector Embedding API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="900" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pgv" value="«pgvector»&#xa;Vector Store" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="900" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: Trigger 'PFE_Competitor_Platform_Report' {competitor_id, domain}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_analyst" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+
+    <!-- Aggregate data from DB -->
+    <mxCell id="m2" value="2: SELECT c.*, COUNT(p.*) as page_count,&#xa;   AVG(pr.current_price) as avg_price, …&#xa;   FROM competitors c LEFT JOIN pages p …&#xa;   WHERE c.id = $competitor_id" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="200"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: competitor_stats {pages, products, avg_price, seo_flags}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="255"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m2b" value="3: SELECT * FROM mv_competitor_summary&#xa;   JOIN mv_product_price_trends WHERE competitor_id = $id" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="295"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2br" value="3.1: aggregated_metrics, price_trends[]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="335"/></mxGeometry>
+    </mxCell>
+
+    <!-- LLM report generation -->
+    <mxCell id="m3" value="4: POST openrouter.ai/api/v1/chat/completions&#xa;   {model, messages:[{role:system, content:REPORT_SYSTEM_PROMPT},&#xa;    {role:user, content:formatted_competitor_data}]}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_llm" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="380"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="4.1: 200 OK {choices:[{message:{content: markdown_report}}]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_llm" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="435"/></mxGeometry>
+    </mxCell>
+
+    <!-- Persist report -->
+    <mxCell id="m4" value="5: INSERT INTO competitor_reports&#xa;   (competitor_id, report_type:'platform', content, generated_at)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="480"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="5.1: report_id" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="515"/></mxGeometry>
+    </mxCell>
+
+    <!-- Embed report and add to vector store -->
+    <mxCell id="m5" value="6: POST /api/v1/embed {report_id, content: report_markdown}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_embed" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="560"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="6.1: {embedding: vector[768]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_embed" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="595"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" value="7: INSERT INTO report_embeddings&#xa;   (report_id, embedding::vector(768), chunk_index)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pgv" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="635"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="7.1: embedding_id (HNSW index updated)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pgv" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="670"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m7" value="8: [report_markdown, report_id] → analyst notification" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_analyst" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="715"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

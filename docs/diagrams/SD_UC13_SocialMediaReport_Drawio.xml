@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="950" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-13: Generate Social Media Intel Report — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_analyst" value="«Human»&#xa;Competitive Analyst" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n_wf" value="«AI Agent»&#xa;n8n: Social Media Scraper" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_serper" value="«External REST»&#xa;Serper API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_llm" value="«External REST»&#xa;OpenRouter LLM" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n_report" value="«AI Agent»&#xa;n8n: Social Report Generator" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: Trigger 'PFE_Social_Media_Intel' {competitor, brand_name, platforms}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_analyst" target="lf_n8n_wf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+
+    <!-- loop over platforms -->
+    <mxCell id="loop1" value="loop [for each platform in {Facebook, Instagram, LinkedIn, TikTok, …}]" style="swimlane;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize:10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="185" width="380" height="200" as="geometry"/>
+    </mxCell>
+    <mxCell id="m2" value="2: POST serper.dev/search&#xa;   {q: 'brand site:platform.com', num:10}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_wf" target="lf_serper" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="215"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: {organic: [{title, link, snippet, date}]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_serper" target="lf_n8n_wf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="255"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2a" value="2.2: extract {posts, engagement, dates, urls}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_wf" target="lf_n8n_wf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="350"/></mxGeometry>
+    </mxCell>
+
+    <!-- Persist raw social data -->
+    <mxCell id="m3" value="3: INSERT INTO social_intel&#xa;   (competitor_id, platform, raw_data JSONB, scraped_at)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_wf" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="405"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: intel_id" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n_wf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="440"/></mxGeometry>
+    </mxCell>
+
+    <!-- trigger report generator -->
+    <mxCell id="m4" value="4: [webhook trigger] 'PFE_Social_Media_Report' {competitor_id}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_n8n_wf" target="lf_n8n_report" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="480"/></mxGeometry>
+    </mxCell>
+
+    <!-- fetch aggregated intel -->
+    <mxCell id="m5" value="5: SELECT * FROM social_intel WHERE competitor_id = $id&#xa;   ORDER BY scraped_at DESC" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_report" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="520"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.1: social_data[]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n_report" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="555"/></mxGeometry>
+    </mxCell>
+
+    <!-- LLM analysis -->
+    <mxCell id="m6" value="6: POST openrouter.ai/api/v1/chat/completions&#xa;   {model, messages:[SOCIAL_SYSTEM_PROMPT + social_data]}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_report" target="lf_llm" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="595"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="6.1: social_media_report_markdown" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_llm" target="lf_n8n_report" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="640"/></mxGeometry>
+    </mxCell>
+
+    <!-- Persist -->
+    <mxCell id="m7" value="7: INSERT INTO competitor_reports&#xa;   (competitor_id, report_type:'social_media', content)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n_report" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="680"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m8" value="8: [report summary] → analyst" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_n8n_report" target="lf_analyst" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="725"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

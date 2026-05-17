@@ -1,0 +1,104 @@
+{
+  "name": "PFE: Proxy Managament Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://proxy.webshare.io/api/v2/proxy/list/?mode=direct&page=1&page_size=100",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        -16
+      ],
+      "id": "e029f71f-5989-4910-97e1-f28dcd0a9f32",
+      "name": "GET Proxies List",
+      "executeOnce": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8CtyuymVKD2a0WXQ",
+          "name": "Webshare API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.results.toJsonString() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        208,
+        -16
+      ],
+      "id": "f8373198-d859-4564-bc1d-8df5ad95c838",
+      "name": "Respond With Proxies List",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "path": "proxies",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        -16
+      ],
+      "id": "7d71b1b8-b2db-461f-94b9-c2bd538352f5",
+      "name": "Webhook",
+      "webhookId": "281eb0cd-7b80-4bb4-a444-0285eb2dd326",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "GET Proxies List": {
+      "main": [
+        [
+          {
+            "node": "Respond With Proxies List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "GET Proxies List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "496b079f-a048-469c-9065-92ba255fb7b9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "TG6Bl4aZFJzQYfOinZYlC",
+  "tags": []
+}

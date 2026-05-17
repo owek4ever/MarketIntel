@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1900" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="Class / Module Relationship Diagram — Competitive Intelligence Platform" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="15" width="2700" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ FRONTIER ══════════════════════════ -->
+    <mxCell id="cls_FrontierConfig" value="«dataclass»&#xa;FrontierConfig&#xa;──────────────────&#xa;+ host: str = 'localhost'&#xa;+ port: int = 6379&#xa;+ key_prefix: str = 'frontier'&#xa;+ default_crawl_delay: float&#xa;+ inflight_timeout: float&#xa;+ max_retries: int&#xa;+ seen_urls_ttl_seconds: int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="40" y="80" width="260" height="190" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_FrontierManager" value="FrontierManager&#xa;──────────────────&#xa;- config: FrontierConfig&#xa;- redis: Redis&#xa;- url_store: URLStore&#xa;- domain_queue: DomainQueue&#xa;- scheduler: RedisFrontierScheduler&#xa;──────────────────&#xa;+ start() : None&#xa;+ close() : None&#xa;+ add_url(url, priority, job_type) : str|None&#xa;+ add_urls(entries) : list[str|None]&#xa;+ get_next_url(wait) : ScheduledURL|None&#xa;+ complete_url(url_id) : bool&#xa;+ fail_url(url_id, error) : str&#xa;+ recover_timed_out_urls() : dict&#xa;+ get_url_status(url_id) : dict|None" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="360" y="80" width="290" height="280" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_Scheduler" value="RedisFrontierScheduler&#xa;──────────────────&#xa;- redis: Redis&#xa;- keys: FrontierKeys&#xa;- _add_url_script: Script&#xa;- _lease_url_script: Script&#xa;- _complete_url_script: Script&#xa;- _fail_url_script: Script&#xa;- _promote_retries_script: Script&#xa;──────────────────&#xa;+ add_url(...) : bool&#xa;+ lease_next_url(now) : LeaseResult|None&#xa;+ complete_url(url_id) : bool&#xa;+ fail_url(sched_url, error) : str&#xa;+ promote_due_retries(now) : int&#xa;+ expired_inflight_ids(now) : list[str]&#xa;# _compute_retry_delay(attempt) : float" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="710" y="80" width="290" height="300" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_ScheduledURL" value="«dataclass»&#xa;ScheduledURL&#xa;──────────────────&#xa;+ id: str&#xa;+ url: str&#xa;+ domain: str&#xa;+ priority: int&#xa;+ retries: int&#xa;+ status: str&#xa;+ job_type: str&#xa;+ metadata: dict|None&#xa;+ created_at: float&#xa;+ started_at: float|None&#xa;+ lease_deadline: float|None&#xa;+ last_error: str|None" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1060" y="80" width="230" height="230" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_LeaseResult" value="«dataclass»&#xa;LeaseResult&#xa;──────────────────&#xa;+ url_id: str&#xa;+ domain: str&#xa;+ lease_deadline: float" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1350" y="80" width="200" height="100" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ CLASSIFIERS ══════════════════════════ -->
+    <mxCell id="cls_PageType" value="«enum»&#xa;PageType&#xa;──────────────────&#xa;GENERAL&#xa;PRODUCT_LIST&#xa;PRODUCT_LIST_PAGINATED&#xa;PRODUCT_DETAIL&#xa;CONTENT_LIST&#xa;UNKNOWN | OTHER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="40" y="360" width="200" height="160" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_UrlCategory" value="«enum»&#xa;UrlCategory&#xa;──────────────────&#xa;HOME | PRODUCT | CATEGORY&#xa;OTHER | BLOG | NEWS&#xa;ABOUT | CONTACT | EVENT&#xa;PROMO | AUTH | SUPPORT | RULES" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="260" y="360" width="220" height="130" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_PageClassification" value="«dataclass»&#xa;PageClassification&#xa;──────────────────&#xa;+ page_type: PageType&#xa;+ pagination: PaginationTypeInfo|None&#xa;+ signals: Dict[str, Any]&#xa;+ notes: str&#xa;──────────────────&#xa;+ to_dict() : dict" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="40" y="570" width="240" height="170" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_ScrapeJob" value="«dataclass»&#xa;ScrapeJob&#xa;──────────────────&#xa;+ url: str&#xa;+ page_type: PageType&#xa;+ metadata: Dict[str, Any]&#xa;──────────────────&#xa;+ to_dict() : dict" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="320" y="540" width="200" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_Classifier" value="«module» classifier.py&#xa;──────────────────&#xa;+ classify_page(page, soup, url,&#xa;    seo_report) : PageClassification&#xa;+ get_main_heading(soup) : str|None&#xa;──────────────────&#xa;Uses: has_schema_product(soup)&#xa;Uses: has_filter_controls(soup)&#xa;Uses: detect_pagination_type(page)&#xa;Uses: classify_url(url)&#xa;Uses: has_related_section(page)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="580" y="360" width="260" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_JobBuilder" value="«module» job_builder.py&#xa;──────────────────&#xa;+ classify_page_from_html(&#xa;    page, html, url, seo_report)&#xa;    : ScrapeJob" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="580" y="620" width="260" height="100" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ BROWSER POOL ══════════════════════════ -->
+    <mxCell id="cls_BrowserPool" value="BrowserPool&#xa;──────────────────&#xa;- config: BrowserPoolConfig&#xa;- _browsers: list[BrowserInstance]&#xa;──────────────────&#xa;+ __aenter__() : BrowserPool&#xa;+ __aexit__() : None&#xa;+ get_page() : AsyncContextManager&#xa;+ snapshot_metrics() : dict" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="900" y="360" width="250" height="190" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_BrowserPoolConfig" value="«dataclass»&#xa;BrowserPoolConfig&#xa;──────────────────&#xa;+ browsers: int&#xa;+ contexts_per_browser: int&#xa;+ headless: bool&#xa;+ browser_proxies: tuple&#xa;+ max_pages_per_context: int&#xa;+ default_timeout_ms: int&#xa;+ on_context_created: Callable" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1200" y="360" width="250" height="190" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ EMBEDDING MODULE ══════════════════════════ -->
+    <mxCell id="cls_EmbeddingProvider" value="«abstract»&#xa;EmbeddingProvider&#xa;──────────────────&#xa;+ generate_embedding(text: str)&#xa;    : List[float]  «abstract»" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3e5f5;strokeColor=#7b1fa2;fontStyle=2;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1620" y="80" width="260" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_LocalProvider" value="LocalEmbeddingProvider&#xa;──────────────────&#xa;- model: SentenceTransformer&#xa;  «intfloat/multilingual-e5-base»&#xa;──────────────────&#xa;+ __init__(model_name: str)&#xa;+ generate_embedding(text: str)&#xa;    : List[float]&#xa;  [prepends 'passage: ' for e5 models]&#xa;  [encode(normalize_embeddings=True)]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1620" y="260" width="270" height="200" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_EmbeddingFactory" value="«Singleton»&#xa;EmbeddingFactory&#xa;──────────────────&#xa;- _instance: EmbeddingProvider&#xa;──────────────────&#xa;+ get_provider() : EmbeddingProvider&#xa;  «classmethod»" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1940" y="150" width="270" height="140" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_ProductPayload" value="«Pydantic»&#xa;ProductPayload&#xa;──────────────────&#xa;+ id: int&#xa;+ url_hash: str&#xa;+ title: str|None&#xa;+ brand: str|None&#xa;+ category: str|None&#xa;+ specifications: dict|None&#xa;+ description: str|None" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1620" y="510" width="230" height="170" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_Payload" value="«Pydantic»&#xa;Payload (Webhook)&#xa;──────────────────&#xa;+ product_id: int&#xa;+ url_hash: str&#xa;+ embedding: List[float]&#xa;+ model_used: str&#xa;+ dimension: int" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1900" y="350" width="230" height="150" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ PROXY MODULE ══════════════════════════ -->
+    <mxCell id="cls_ProxyStore" value="ProxyStore&#xa;──────────────────&#xa;- redis: Redis&#xa;- hourly_limit: int&#xa;- daily_limit: int&#xa;- key_available: str = 'proxies:available'&#xa;──────────────────&#xa;+ sync_proxies(proxy_list) : None&#xa;+ get_best_proxy(domain) : str|None&#xa;+ record_usage(proxy, domain) : None&#xa;+ report_failure(proxy) : None" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="40" y="800" width="270" height="200" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_WebhookNotifier" value="WebhookNotifier&#xa;──────────────────&#xa;- client: httpx.AsyncClient&#xa;- timeout: float&#xa;──────────────────&#xa;+ send_payload(webhook_url, payload)&#xa;    : Response|None&#xa;+ close() : None" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="360" y="800" width="250" height="150" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ DB MODELS (PostgreSQL) ══════════════════════════ -->
+    <mxCell id="cls_Competitor" value="«DB Table»&#xa;competitors&#xa;──────────────────&#xa;+ id: SERIAL PK&#xa;+ domain: VARCHAR(255) UNIQUE&#xa;+ name: VARCHAR(255)&#xa;+ metadata: JSONB&#xa;+ created_at: TIMESTAMPTZ" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="700" y="800" width="230" height="160" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_Pages" value="«DB Table»&#xa;pages&#xa;──────────────────&#xa;+ url_hash: VARCHAR(64) PK&#xa;+ competitor_id: INTEGER FK&#xa;+ url: TEXT UNIQUE&#xa;+ page_type: VARCHAR(50)&#xa;+ page_metadata: JSONB&#xa;+ next_run_at: TIMESTAMPTZ&#xa;+ recent_content_hash: VARCHAR(64)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="990" y="800" width="240" height="200" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_Products" value="«DB Table»&#xa;products&#xa;──────────────────&#xa;+ id: BIGSERIAL PK&#xa;+ competitor_id: INTEGER FK&#xa;+ url_hash: VARCHAR(64) FK → pages&#xa;+ title: TEXT&#xa;+ current_price: DECIMAL(10,2)&#xa;+ specifications: JSONB&#xa;+ description_embedding: vector(768)&#xa;+ in_stock: BOOLEAN&#xa;+ first_seen_at: TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1290" y="800" width="260" height="230" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_PriceHistory" value="«DB Table»&#xa;price_history&#xa;──────────────────&#xa;+ id: BIGSERIAL PK&#xa;+ product_id: BIGINT FK&#xa;+ price: DECIMAL(10,2)&#xa;+ recorded_at: TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1620" y="800" width="220" height="140" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_StockHistory" value="«DB Table»&#xa;stock_history&#xa;──────────────────&#xa;+ id: BIGSERIAL PK&#xa;+ product_id: BIGINT FK&#xa;+ in_stock: BOOLEAN&#xa;+ recorded_at: TIMESTAMP" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1900" y="800" width="220" height="140" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cls_PageSnapshot" value="«DB Table»&#xa;page_snapshots&#xa;──────────────────&#xa;+ id: BIGSERIAL PK&#xa;+ page_url_hash: VARCHAR(64) FK&#xa;+ status_code: INTEGER&#xa;+ title: TEXT&#xa;+ h1_count..h6_count: INTEGER&#xa;+ word_count: INTEGER&#xa;+ flesch_kincaid_grade: DECIMAL&#xa;+ seo_flags: JSONB&#xa;+ headings: JSONB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#27ae60;align=left;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="990" y="1060" width="250" height="210" as="geometry"/>
+    </mxCell>
+
+    <!-- ══════════════════════════ RELATIONSHIPS ══════════════════════════ -->
+
+    <!-- FrontierConfig → FrontierManager (dependency) -->
+    <mxCell id="r1" value="" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_FrontierConfig" target="cls_FrontierManager" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- FrontierManager composes Scheduler (composition) -->
+    <mxCell id="r2" value="composes" style="edgeStyle=orthogonalEdgeStyle;endArrow=diamondFilled;endFill=1;html=1;" edge="1" source="cls_FrontierManager" target="cls_Scheduler" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- FrontierManager returns ScheduledURL -->
+    <mxCell id="r3" value="returns" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_FrontierManager" target="cls_ScheduledURL" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Scheduler returns LeaseResult -->
+    <mxCell id="r4" value="returns" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_Scheduler" target="cls_LeaseResult" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Classifier produces PageClassification -->
+    <mxCell id="r5" value="produces" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_Classifier" target="cls_PageClassification" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- PageClassification uses PageType -->
+    <mxCell id="r6" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=open;html=1;" edge="1" source="cls_PageClassification" target="cls_PageType" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- JobBuilder uses Classifier -->
+    <mxCell id="r7" value="«uses»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_JobBuilder" target="cls_Classifier" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- JobBuilder produces ScrapeJob -->
+    <mxCell id="r8" value="produces" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_JobBuilder" target="cls_ScrapeJob" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ScrapeJob uses PageType -->
+    <mxCell id="r9" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=open;html=1;" edge="1" source="cls_ScrapeJob" target="cls_PageType" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- BrowserPool aggregates BrowserPoolConfig -->
+    <mxCell id="r10" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=diamond;endFill=0;html=1;" edge="1" source="cls_BrowserPool" target="cls_BrowserPoolConfig" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- LocalProvider inherits EmbeddingProvider -->
+    <mxCell id="r11" value="" style="edgeStyle=orthogonalEdgeStyle;endArrow=block;endFill=0;html=1;" edge="1" source="cls_LocalProvider" target="cls_EmbeddingProvider" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- EmbeddingFactory creates LocalProvider -->
+    <mxCell id="r12" value="«creates»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_EmbeddingFactory" target="cls_LocalProvider" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ProductPayload → Payload (transforms to) -->
+    <mxCell id="r13" value="«transforms to»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;html=1;" edge="1" source="cls_ProductPayload" target="cls_Payload" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- DB FK: competitors → pages (1..* composition) -->
+    <mxCell id="r14" value="1  has  0..*" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;html=1;" edge="1" source="cls_Competitor" target="cls_Pages" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- DB FK: pages → products -->
+    <mxCell id="r15" value="1  has  0..*" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;html=1;" edge="1" source="cls_Pages" target="cls_Products" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- DB FK: products → price_history -->
+    <mxCell id="r16" value="1  has  0..*" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;html=1;" edge="1" source="cls_Products" target="cls_PriceHistory" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- DB FK: products → stock_history -->
+    <mxCell id="r17" value="1  has  0..*" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;html=1;" edge="1" source="cls_Products" target="cls_StockHistory" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- DB FK: pages → page_snapshots -->
+    <mxCell id="r18" value="1  has  0..*" style="edgeStyle=orthogonalEdgeStyle;endArrow=ERmany;html=1;" edge="1" source="cls_Pages" target="cls_PageSnapshot" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="PFE2: Deployment Diagram — Infrastructure Topology" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=18;fontStyle=1;fontColor=#1A237E;" vertex="1" parent="1">
+      <mxGeometry x="100" y="15" width="1400" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== HOST: Developer Machine / On-Prem Server ===== -->
+    <mxCell id="host_machine" value="&lt;b&gt;On-Premises Host Machine&lt;/b&gt; (Windows 11 / Linux)&#xa;IP: 192.168.1.222" style="swimlane;startSize=35;fillColor=#F5F5F5;strokeColor=#455A64;fontColor=#263238;fontSize=13;" vertex="1" parent="1">
+      <mxGeometry x="40" y="80" width="1380" height="1000" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== DOCKER COMPOSE: n8n Stack ===== -->
+    <mxCell id="compose_n8n" value="Docker Compose — n8n Stack" style="swimlane;startSize=28;fillColor=#FFF3E0;strokeColor=#E65100;fontColor=#BF360C;fontSize=12;fontStyle=1;" vertex="1" parent="host_machine">
+      <mxGeometry x="30" y="50" width="680" height="440" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_n8n" value="&lt;b&gt;n8n&lt;/b&gt;&#xa;Image: n8nio/n8n:latest&#xa;Port: 5678:5678&#xa;Webhook endpoints:&#xa;  /webhook/crawl_result&#xa;  /webhook/product_list_scrape_result&#xa;  /webhook/product_scrape_result&#xa;  /webhook/content_scrape_result&#xa;  /webhook/proxies&#xa;Auth: x-api-key header&#xa;DB: PostgreSQL (n8n metadata)" style="shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.ec2;html=1;fillColor=#FFE0B2;strokeColor=#E65100;align=left;fontSize=11;spacingLeft=40;rounded=1;whiteSpace=wrap;" vertex="1" parent="compose_n8n">
+      <mxGeometry x="20" y="40" width="300" height="230" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_redis_n8n" value="&lt;b&gt;Redis 7&lt;/b&gt; (shared)&#xa;Image: redis:7-alpine&#xa;Port: 6379:6379&#xa;Volumes: redis_data&#xa;Usage:&#xa;  · n8n Chat Memory&#xa;  · Frontier ZSET&#xa;  · Proxy Store&#xa;  · Seen-URL Set (TTL: 3d)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;fontSize=11;" vertex="1" parent="compose_n8n">
+      <mxGeometry x="340" y="40" width="320" height="195" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_postgres" value="&lt;b&gt;PostgreSQL 16 + pgvector&lt;/b&gt;&#xa;Image: timescale/timescaledb-ha:pg16&#xa;Port: 5432:5432&#xa;Extensions: pgvector, vectorscale&#xa;Volumes: postgres_data&#xa;Databases:&#xa;  · n8n (workflow metadata)&#xa;  · pfe (application data)&#xa;Tables:&#xa;  competitors, products, sitemaps,&#xa;  price_history, stock_history,&#xa;  seo_scores, social_metrics,&#xa;  competitor_reports, report_chunks" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#E65100;fontSize=11;" vertex="1" parent="compose_n8n">
+      <mxGeometry x="20" y="300" width="300" height="130" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_qdrant" value="&lt;b&gt;Qdrant&lt;/b&gt;&#xa;Image: qdrant/qdrant:latest&#xa;Port: 6333:6333 (HTTP)&#xa;       6334:6334 (gRPC)&#xa;Collections:&#xa;  · reports (BGE-M3 768-dim)&#xa;Index: HNSW cosine similarity&#xa;Volumes: qdrant_storage" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#FFCC80;strokeColor=#E65100;fontSize=11;" vertex="1" parent="compose_n8n">
+      <mxGeometry x="340" y="270" width="320" height="160" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== DOCKER COMPOSE: Scraper Stack ===== -->
+    <mxCell id="compose_scraper" value="Docker Compose — Scraper Stack" style="swimlane;startSize=28;fillColor=#E3F2FD;strokeColor=#1976D2;fontColor=#0D47A1;fontSize=12;fontStyle=1;" vertex="1" parent="host_machine">
+      <mxGeometry x="730" y="50" width="620" height="440" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_scraper_api" value="&lt;b&gt;Scraper FastAPI&lt;/b&gt;&#xa;Image: python:3.11-slim (custom)&#xa;Build: scraper/Dockerfile&#xa;Port: 8000:8000&#xa;Endpoints:&#xa;  POST /frontier/urls&#xa;  POST /frontier/urls/batch&#xa;  GET /frontier/urls/{id}&#xa;  GET /health" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="compose_scraper">
+      <mxGeometry x="20" y="40" width="265" height="185" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_scraper_worker" value="&lt;b&gt;Scraper Worker&lt;/b&gt;&#xa;Image: python:3.11-slim (custom)&#xa;Build: scraper/Dockerfile&#xa;Concurrency: 3 asyncio workers&#xa;Browser Pool: 2 Chromium × 4 ctx&#xa;shm_size: 2GB&#xa;Scalable: --scale worker=N&#xa;Env: REDIS_HOST=redis" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#BBDEFB;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="compose_scraper">
+      <mxGeometry x="310" y="40" width="290" height="185" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_prometheus" value="&lt;b&gt;Prometheus&lt;/b&gt;&#xa;Image: prom/prometheus:latest&#xa;Port: 9090:9090&#xa;Config: prometheus.yml&#xa;Volumes: prometheus_data&#xa;Scrape: scraper worker /metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CFD8DC;strokeColor=#455A64;fontSize=11;" vertex="1" parent="compose_scraper">
+      <mxGeometry x="20" y="260" width="265" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_playwright" value="&lt;b&gt;Playwright Chromium&lt;/b&gt;&#xa;Embedded in worker container&#xa;Mode: headless=true&#xa;locale: fr-TN&#xa;disable_images: true&#xa;Stealth: navigator.webdriver=undefined&#xa;Proxy: http://proxy_manager:8888" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#90CAF9;strokeColor=#1976D2;fontSize=11;" vertex="1" parent="compose_scraper">
+      <mxGeometry x="310" y="260" width="290" height="150" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== DOCKER COMPOSE: Proxy Manager ===== -->
+    <mxCell id="compose_proxy" value="Docker Compose — Proxy Manager Stack" style="swimlane;startSize=28;fillColor=#F3E5F5;strokeColor=#7B1FA2;fontColor=#4A148C;fontSize=12;fontStyle=1;" vertex="1" parent="host_machine">
+      <mxGeometry x="30" y="530" width="400" height="280" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_proxy_mgr" value="&lt;b&gt;Proxy Manager&lt;/b&gt;&#xa;Image: python:3.12-slim (custom)&#xa;Port: 8888:8888&#xa;Protocol: TCP CONNECT + HTTP GET&#xa;Env:&#xa;  PROXY_HOST=0.0.0.0&#xa;  HOURLY_LIMIT=50&#xa;  DAILY_LIMIT=500&#xa;  SYNC_INTERVAL_SECONDS=300&#xa;  N8N_PROXY_URL=http://n8n:5678/webhook/proxies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1BEE7;strokeColor=#7B1FA2;fontSize=11;" vertex="1" parent="compose_proxy">
+      <mxGeometry x="20" y="40" width="360" height="220" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== NATIVE PROCESS: Vector Embedding Service ===== -->
+    <mxCell id="native_embed" value="Native Python Process — Vector Embedding Service" style="swimlane;startSize=28;fillColor=#E8F5E9;strokeColor=#388E3C;fontColor=#1B5E20;fontSize=12;fontStyle=1;" vertex="1" parent="host_machine">
+      <mxGeometry x="460" y="530" width="420" height="280" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="cnt_embed_svc" value="&lt;b&gt;Embedding FastAPI&lt;/b&gt;&#xa;Runtime: Python 3.x + uvicorn&#xa;Port: 8001&#xa;Model: intfloat/multilingual-e5-base&#xa;  · 768-dim output&#xa;  · Normalized embeddings&#xa;  · CPU inference (fallback to GPU)&#xa;Provider: SentenceTransformers&#xa;Cache: Hugging Face ~/.cache/huggingface" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;fontSize=11;" vertex="1" parent="native_embed">
+      <mxGeometry x="20" y="40" width="380" height="220" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== EXTERNAL CLOUD SERVICES ===== -->
+    <mxCell id="ext_cloud" value="External Cloud Services" style="swimlane;startSize=28;fillColor=#FFF9C4;strokeColor=#F57F17;fontColor=#E65100;fontSize=12;fontStyle=1;" vertex="1" parent="host_machine">
+      <mxGeometry x="910" y="530" width="440" height="440" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ext_openrouter" value="&lt;b&gt;OpenRouter API&lt;/b&gt;&#xa;URL: https://openrouter.ai/api/v1&#xa;Model: deepseek/deepseek-v4-flash&#xa;Protocol: HTTPS REST&#xa;Auth: Bearer Token&#xa;Usage: LLM inference for&#xa;  · Report generation&#xa;  · RAG chat responses" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="ext_cloud">
+      <mxGeometry x="20" y="40" width="200" height="175" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ext_hf" value="&lt;b&gt;Hugging Face Hub&lt;/b&gt;&#xa;URL: https://huggingface.co&#xa;Model: intfloat/multilingual-e5-base&#xa;Protocol: HTTPS&#xa;Usage: One-time model download&#xa;  to local ~/.cache" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="ext_cloud">
+      <mxGeometry x="230" y="40" width="190" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ext_serper" value="&lt;b&gt;Serper API&lt;/b&gt;&#xa;URL: https://serper.dev&#xa;Protocol: HTTPS REST&#xa;Usage: Google Search results&#xa;  for competitor discovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="ext_cloud">
+      <mxGeometry x="20" y="235" width="200" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ext_social" value="&lt;b&gt;Social Media Platforms&lt;/b&gt;&#xa;· Facebook Graph (REST)&#xa;· Instagram (scraping)&#xa;· TikTok (scraping)&#xa;· LinkedIn (scraping)&#xa;Protocol: HTTPS (via Playwright)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="ext_cloud">
+      <mxGeometry x="230" y="210" width="190" height="145" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="ext_target_sites" value="&lt;b&gt;Target E-Commerce Sites&lt;/b&gt;&#xa;(Competitor Websites)&#xa;Protocol: HTTPS via Proxy&#xa;Data: HTML + JSON-LD + Assets&#xa;Rate: max 10 URLs/domain" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;fontSize=11;" vertex="1" parent="ext_cloud">
+      <mxGeometry x="20" y="375" width="400" height="55" as="geometry"/>
+    </mxCell>
+
+    <!-- ===== NETWORK CONNECTIONS ===== -->
+    <!-- n8n → Scraper API -->
+    <mxCell id="net1" value="HTTP POST /frontier/urls&#xa;(REST, x-api-key auth)" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=2;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_n8n" target="cnt_scraper_api">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Scraper Worker → Redis -->
+    <mxCell id="net2" value="Redis Protocol&#xa;:6379" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1976D2;strokeWidth=2;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_scraper_worker" target="cnt_redis_n8n">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Scraper Worker → n8n webhooks -->
+    <mxCell id="net3" value="HTTP POST webhooks&#xa;:5678/webhook/*" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#1976D2;strokeWidth=2;fontSize=10;dashed=1;endArrow=open;" edge="1" parent="host_machine" source="cnt_scraper_worker" target="cnt_n8n">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → PostgreSQL -->
+    <mxCell id="net4" value="PostgreSQL wire&#xa;:5432" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_n8n" target="cnt_postgres">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Qdrant -->
+    <mxCell id="net5" value="HTTP :6333" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_n8n" target="cnt_qdrant">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Embedding Service -->
+    <mxCell id="net6" value="HTTP POST :8001&#xa;/api/v1/products/embed" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_n8n" target="cnt_embed_svc">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Playwright → Proxy -->
+    <mxCell id="net7" value="HTTP CONNECT :8888" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7B1FA2;strokeWidth=2;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_playwright" target="cnt_proxy_mgr">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Proxy Manager → Redis -->
+    <mxCell id="net8" value="Redis :6379" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7B1FA2;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_proxy_mgr" target="cnt_redis_n8n">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Proxy → External Sites -->
+    <mxCell id="net9" value="HTTPS via upstream proxies" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#7B1FA2;strokeWidth=1.5;fontSize=10;dashed=1;endArrow=open;" edge="1" parent="host_machine" source="cnt_proxy_mgr" target="ext_target_sites">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → OpenRouter -->
+    <mxCell id="net10" value="HTTPS REST" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_n8n" target="ext_openrouter">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- n8n → Social Platforms -->
+    <mxCell id="net11" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#E65100;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_n8n" target="ext_social">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Embed → HF -->
+    <mxCell id="net12" value="HTTPS (one-time download)" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#388E3C;strokeWidth=1.5;fontSize=10;dashed=1;endArrow=open;" edge="1" parent="host_machine" source="cnt_embed_svc" target="ext_hf">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- Prometheus → Worker -->
+    <mxCell id="net13" value="HTTP scrape :8000/metrics" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#455A64;strokeWidth=1.5;fontSize=10;endArrow=open;" edge="1" parent="host_machine" source="cnt_prometheus" target="cnt_scraper_worker">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

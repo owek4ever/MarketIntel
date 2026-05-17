@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1600" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="System Component Diagram — Competitive Intelligence Platform" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="15" width="2300" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         PACKAGE: Orchestration Layer
+    ═══════════════════════════════════════════ -->
+    <mxCell id="pkg_orchestration" value="«Package» Orchestration Layer" style="swimlane;startSize=30;strokeColor=#1a237e;fillColor=#e8eaf6;fontStyle=1;fontSize=12;align=left;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="70" width="520" height="500" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_n8n" value="«n8n»&#xa;Workflow Orchestrator&#xa;────────────────&#xa;12+ workflow automations&#xa;- Companies Search&#xa;- Crawl Result Handler&#xa;- Product List Handler&#xa;- Product Detail Handler&#xa;- Unknown Page Handler&#xa;- Social Media Scraper&#xa;- Platform Report Generator&#xa;- Social Media Report&#xa;- Failed Jobs Handler&#xa;- Proxy Management&#xa;- Materialized Views Refresh&#xa;- Add Report to Vector Store&#xa;- Chat AI Insights" style="shape=component;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;" vertex="1" parent="pkg_orchestration">
+      <mxGeometry x="60" y="50" width="400" height="420" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         PACKAGE: Scraper Service
+    ═══════════════════════════════════════════ -->
+    <mxCell id="pkg_scraper" value="«Package» Scraper Service «Python 3.11 / FastAPI»" style="swimlane;startSize=30;strokeColor=#2e7d32;fillColor=#e8f5e9;fontStyle=1;fontSize=12;align=left;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="620" y="70" width="900" height="700" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_frontier_api" value="«FastAPI»&#xa;Frontier Ingestion API&#xa;─────────────────&#xa;POST /frontier/urls&#xa;POST /frontier/urls/batch&#xa;GET /frontier/urls/{id}&#xa;GET /health" style="shape=component;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="40" y="50" width="250" height="170" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_worker" value="«AsyncIO»&#xa;Worker Pool (N workers)&#xa;─────────────────&#xa;worker_loop()&#xa;scrape_url()&#xa;send_result_to_webhook()" style="shape=component;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="340" y="50" width="240" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_recovery" value="«AsyncIO Daemon»&#xa;Recovery Loop&#xa;─────────────────&#xa;recover_timed_out_urls()&#xa;[every 30s]" style="shape=component;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="630" y="50" width="230" height="130" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_frontier_mgr" value="«Module»&#xa;FrontierManager&#xa;─────────────────&#xa;add_url() / add_urls()&#xa;get_next_url()&#xa;complete_url() / fail_url()&#xa;recover_timed_out_urls()" style="shape=component;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="40" y="260" width="250" height="160" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_scheduler" value="«Redis Lua»&#xa;RedisFrontierScheduler&#xa;─────────────────&#xa;ADD_URL_LUA&#xa;LEASE_URL_LUA&#xa;COMPLETE_URL_LUA&#xa;FAIL_URL_LUA&#xa;PROMOTE_RETRIES_LUA" style="shape=component;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="340" y="240" width="240" height="180" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_browser_pool" value="«Playwright»&#xa;BrowserPool&#xa;─────────────────&#xa;N browsers × M contexts&#xa;Stealth JS injection&#xa;Resource capture&#xa;Performance metrics" style="shape=component;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="630" y="220" width="230" height="160" as="geometry"/>
+    </mxCell>
+
+    <!-- AI Agent sub-components -->
+    <mxCell id="comp_clf" value="«AI Agent»&#xa;Page Classifier&#xa;─────────────────&#xa;classify_page()&#xa;classify_url()&#xa;detect_pagination_type()" style="shape=component;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="40" y="460" width="230" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_seo" value="«AI Agent»&#xa;SEO Analyzer&#xa;─────────────────&#xa;OnPageAnalyzer&#xa;TechnicalSEOAnalyzer&#xa;ContentAnalyzer&#xa;AssetsAnalyzer" style="shape=component;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="320" y="460" width="230" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_extractors" value="«Module»&#xa;Extractors&#xa;─────────────────&#xa;extract_product_detail()&#xa;extract_product_list_items()&#xa;extract_text_content()&#xa;discover_urls() / classify_urls()" style="shape=component;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="600" y="460" width="260" height="150" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_paginator" value="«AI Agent»&#xa;HybridPaginator&#xa;─────────────────&#xa;extract_products_while_paginating()&#xa;Numbered / Load-more&#xa;Infinite scroll support" style="shape=component;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="40" y="640" width="260" height="130" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_webhook" value="«httpx»&#xa;WebhookNotifier&#xa;─────────────────&#xa;send_payload()&#xa;x-api-key auth" style="shape=component;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=10;" vertex="1" parent="pkg_scraper">
+      <mxGeometry x="360" y="640" width="240" height="120" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         PACKAGE: Proxy Manager Service
+    ═══════════════════════════════════════════ -->
+    <mxCell id="pkg_proxy" value="«Package» Proxy Manager Service «Python / asyncio»" style="swimlane;startSize=30;strokeColor=#e65100;fillColor=#fff3e0;fontStyle=1;fontSize=12;align=left;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="620" width="520" height="400" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_proxy_server" value="«AI Agent / TCP»&#xa;Proxy Server :8888&#xa;─────────────────&#xa;handle_client()&#xa;stream_copy() bidirectional&#xa;CONNECT tunnel&#xa;Blocked domain filter" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=10;" vertex="1" parent="pkg_proxy">
+      <mxGeometry x="40" y="50" width="200" height="190" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_proxy_store" value="«Module»&#xa;ProxyStore&#xa;─────────────────&#xa;sync_proxies()&#xa;get_best_proxy()&#xa;record_usage()&#xa;report_failure()" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=10;" vertex="1" parent="pkg_proxy">
+      <mxGeometry x="280" y="50" width="200" height="190" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_n8n_sync" value="«Daemon»&#xa;n8n_sync.py&#xa;─────────────────&#xa;sync_loop()&#xa;fetch_and_sync_proxies()&#xa;[periodic poll]" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#e65100;fontSize=10;" vertex="1" parent="pkg_proxy">
+      <mxGeometry x="160" y="280" width="200" height="130" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         PACKAGE: Vector Embedding Service
+    ═══════════════════════════════════════════ -->
+    <mxCell id="pkg_vector" value="«Package» Vector Embedding Service «FastAPI»" style="swimlane;startSize=30;strokeColor=#7b1fa2;fillColor=#f3e5f5;fontStyle=1;fontSize=12;align=left;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1580" y="70" width="500" height="480" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_embed_api" value="«FastAPI»&#xa;Embedding API&#xa;─────────────────&#xa;POST /api/v1/products/embed&#xa;GET /health" style="shape=component;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="pkg_vector">
+      <mxGeometry x="40" y="50" width="200" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_factory" value="«Singleton»&#xa;EmbeddingFactory&#xa;─────────────────&#xa;get_provider()&#xa;_instance: EmbeddingProvider" style="shape=component;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="pkg_vector">
+      <mxGeometry x="270" y="50" width="200" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_local_provider" value="«AI Agent»&#xa;LocalEmbeddingProvider&#xa;─────────────────&#xa;generate_embedding(text)&#xa;model: SentenceTransformer&#xa;«intfloat/multilingual-e5-base»&#xa;768-dim output" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ce93d8;strokeColor=#7b1fa2;fontSize=10;" vertex="1" parent="pkg_vector">
+      <mxGeometry x="140" y="210" width="220" height="180" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         PACKAGE: Data Layer
+    ═══════════════════════════════════════════ -->
+    <mxCell id="pkg_data" value="«Package» Data &amp; State Layer" style="swimlane;startSize=30;strokeColor=#880e4f;fillColor=#fce4ec;fontStyle=1;fontSize=12;align=left;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="1580" y="620" width="800" height="520" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_redis" value="«Redis 7»&#xa;Frontier Cache / Proxy Store&#xa;────────────────────────────&#xa;Sorted Sets: ready_domains, inflight_timeouts,&#xa;               retry_schedule&#xa;Hashes: url:{id}, inflight, domain_inflight&#xa;Lists: domain_queue:{domain}, failed&#xa;Sets: proxies:available&#xa;Strings: seen:{id} [TTL 3d], rate:…, failed_proxy:…&#xa;Lua Scripts: 5 atomic operations" style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;fontSize=10;align=left;" vertex="1" parent="pkg_data">
+      <mxGeometry x="40" y="50" width="350" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_pg" value="«PostgreSQL + pgvector»&#xa;Primary Database&#xa;────────────────────────────&#xa;competitors, pages, page_snapshots&#xa;scrape_jobs, products, price_history&#xa;stock_history&#xa;description_embedding vector(768) HNSW&#xa;TimescaleDB / vectorscale ext." style="shape=component;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#c62828;fontSize=10;align=left;" vertex="1" parent="pkg_data">
+      <mxGeometry x="420" y="50" width="350" height="220" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         PACKAGE: External Services
+    ═══════════════════════════════════════════ -->
+    <mxCell id="pkg_external" value="«Package» External Services" style="swimlane;startSize=30;strokeColor=#546e7a;fillColor=#eceff1;fontStyle=1;fontSize=12;align=left;rounded=1;" vertex="1" parent="1">
+      <mxGeometry x="40" y="1080" width="1100" height="220" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_serper" value="«REST API»&#xa;Serper API&#xa;─────────&#xa;Google Search" style="shape=component;whiteSpace=wrap;html=1;fillColor=#cfd8dc;strokeColor=#546e7a;fontSize=10;" vertex="1" parent="pkg_external">
+      <mxGeometry x="40" y="50" width="180" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_openrouter" value="«REST API»&#xa;OpenRouter LLM&#xa;─────────────&#xa;LLM inference&#xa;Report generation" style="shape=component;whiteSpace=wrap;html=1;fillColor=#cfd8dc;strokeColor=#546e7a;fontSize=10;" vertex="1" parent="pkg_external">
+      <mxGeometry x="260" y="50" width="180" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_hf_hub" value="«Hugging Face Hub»&#xa;Model Registry&#xa;─────────────────&#xa;intfloat/multilingual-e5-base&#xa;download on cold start" style="shape=component;whiteSpace=wrap;html=1;fillColor=#cfd8dc;strokeColor=#546e7a;fontSize=10;" vertex="1" parent="pkg_external">
+      <mxGeometry x="480" y="50" width="200" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_proxy_provider" value="«TCP Upstream»&#xa;Proxy Providers&#xa;─────────────────&#xa;Residential / DC proxies&#xa;user:pass@ip:port" style="shape=component;whiteSpace=wrap;html=1;fillColor=#cfd8dc;strokeColor=#546e7a;fontSize=10;" vertex="1" parent="pkg_external">
+      <mxGeometry x="720" y="50" width="200" height="120" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="comp_prometheus" value="«Prometheus»&#xa;Monitoring&#xa;─────────────────&#xa;:9090 metrics scrape" style="shape=component;whiteSpace=wrap;html=1;fillColor=#cfd8dc;strokeColor=#546e7a;fontSize=10;" vertex="1" parent="pkg_external">
+      <mxGeometry x="960" y="50" width="100" height="120" as="geometry"/>
+    </mxCell>
+
+    <!-- ═══════════════════════════════════════════
+         INTER-PACKAGE CONNECTIONS
+    ═══════════════════════════════════════════ -->
+    <!-- n8n → Frontier API (REST) -->
+    <mxCell id="e1" value="«REST/HTTP»&#xa;POST /frontier/urls" style="edgeStyle=orthogonalEdgeStyle;dashed=0;endArrow=open;html=1;fontSize=10;" edge="1" source="comp_n8n" target="comp_frontier_api" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- n8n → PostgreSQL -->
+    <mxCell id="e2" value="«SQL/TCP»" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_n8n" target="comp_pg" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- n8n → Vector Embedding -->
+    <mxCell id="e3" value="«REST/HTTP»&#xa;POST /embed" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_n8n" target="comp_embed_api" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- n8n → Serper -->
+    <mxCell id="e4" value="«HTTPS»" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_n8n" target="comp_serper" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- n8n → OpenRouter -->
+    <mxCell id="e5" value="«HTTPS»" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_n8n" target="comp_openrouter" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- Webhook → n8n -->
+    <mxCell id="e6" value="«HTTP POST»&#xa;webhook events" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;dashed=1;" edge="1" source="comp_webhook" target="comp_n8n" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- FrontierMgr → Redis -->
+    <mxCell id="e7" value="«Redis Protocol»&#xa;Lua scripts" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_frontier_mgr" target="comp_redis" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- BrowserPool → ProxyServer -->
+    <mxCell id="e8" value="«TCP CONNECT»&#xa;:8888" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_browser_pool" target="comp_proxy_server" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ProxyStore → Redis -->
+    <mxCell id="e9" value="«Redis Protocol»" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_proxy_store" target="comp_redis" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- EmbeddingProvider → HF Hub -->
+    <mxCell id="e10" value="«model.encode()»" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_local_provider" target="comp_hf_hub" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- n8n sync → n8n -->
+    <mxCell id="e11" value="«HTTP GET»&#xa;proxy list" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_n8n_sync" target="comp_n8n" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+    <!-- ProxyServer → Proxy Providers -->
+    <mxCell id="e12" value="«TCP tunnel»" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="comp_proxy_server" target="comp_proxy_provider" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

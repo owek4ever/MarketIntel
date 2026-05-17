@@ -1,0 +1,53 @@
+sequenceDiagram
+    participant Scraper as Scraper Worker
+    participant Browser as Browser Pool
+    participant Page as Web Page
+    participant Actions as Scraper Actions
+    participant Webhook as Notification System
+
+    Scraper->>Browser: Open Browser Page Context
+    Browser-->>Scraper: Browser Page Instance
+    
+    Note over Scraper, Page: Initial Page Load
+    Scraper->>Actions: Navigate to Web Page
+    Actions-->>Scraper: Page Data & Assets
+    
+    Scraper->>Page: Get HTML Content
+    Page-->>Scraper: HTML Content
+    
+    Scraper->>Page: Get Page Title
+    Page-->>Scraper: Page Title
+    
+    Scraper->>Actions: Analyze Page for SEO
+    Actions-->>Scraper: SEO Report
+    
+    Note over Scraper, Actions: Extract Data Based on Page Type
+    alt Homepage
+        Scraper->>Actions: Identify Internal Links
+        Actions-->>Scraper: List of Links
+    else Other Types of Pages
+        Scraper->>Actions: Identify Page Type
+        Actions-->>Scraper: Page Type & Metadata
+        
+        alt Paginated Product List
+            loop While more pages exist
+                Scraper->>Actions: Extract Products from Current Page
+                Scraper->>Actions: Move to Next Page/Load More
+            end
+            Actions-->>Scraper: List of Products
+        else Non-Paginated Product List
+            Scraper->>Actions: Extract Product List
+            Actions-->>Scraper: List of Products
+        else Product Page
+            Scraper->>Actions: Extract Product Details
+            Actions-->>Scraper: Product Information
+        else General Page
+            Scraper->>Actions: Extract Page Text
+            Actions-->>Scraper: Text Content
+        end
+    end
+
+    Note over Scraper: Scraping Task Complete
+    
+    Scraper->>Webhook: Send Results to Webhook
+    Webhook->>Webhook: Notify External System

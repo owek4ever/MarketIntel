@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="950" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-11: Persist Scrape Results to PostgreSQL — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Worker" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_notifier" value="«HTTP»&#xa;WebhookNotifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n: Result Handler" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_embed_api" value="«FastAPI»&#xa;Vector Embedding API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1bee7;strokeColor=#7b1fa2;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_mv" value="«PostgreSQL»&#xa;Materialized Views" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: POST /webhook/{event_type}_result {payload} [x-api-key]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_worker" target="lf_notifier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1a" value="1.1: forward to n8n webhook URL (192.168.1.222:5678)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_notifier" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="190"/></mxGeometry>
+    </mxCell>
+
+    <!-- page insert -->
+    <mxCell id="m2" value="2: INSERT INTO pages (url_hash, competitor_id, url, page_type, page_metadata)&#xa;   ON CONFLICT (url) DO UPDATE SET page_type, page_metadata, next_run_at" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="235"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: url_hash (PK)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="275"/></mxGeometry>
+    </mxCell>
+
+    <!-- snapshot -->
+    <mxCell id="m3" value="3: INSERT INTO page_snapshots (page_url_hash, status_code, title,&#xa;   h1..h6_count, word_count, flesch_kincaid_grade, seo_flags JSONB, headings JSONB)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="315"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: snapshot_id" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="355"/></mxGeometry>
+    </mxCell>
+
+    <!-- alt: product page -->
+    <mxCell id="alt_prod" value="alt [page_type == PRODUCT_DETAIL]" style="swimlane;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize:10;" vertex="1" parent="1">
+      <mxGeometry x="520" y="375" width="780" height="230" as="geometry"/>
+    </mxCell>
+    <mxCell id="m4" value="4: UPSERT INTO products (url_hash, competitor_id, title,&#xa;   current_price, specifications, in_stock) ON CONFLICT UPDATE" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="415"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4a" value="4.1: INSERT INTO price_history (product_id, price)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="450"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4b" value="4.2: INSERT INTO stock_history (product_id, in_stock)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="485"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" value="5: POST /api/v1/products/embed {product data}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_embed_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="530"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.1: 200 OK {embedding: vector[768]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_embed_api" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="565"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6" value="6: UPDATE products SET description_embedding = $vector::vector" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="640"/></mxGeometry>
+    </mxCell>
+
+    <!-- Refresh materialized views -->
+    <mxCell id="m7" value="7: [periodic] REFRESH MATERIALIZED VIEW CONCURRENTLY&#xa;   mv_competitor_summary, mv_product_price_trends" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_n8n" target="lf_mv" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="705"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7r" value="7.1: OK" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_mv" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="740"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

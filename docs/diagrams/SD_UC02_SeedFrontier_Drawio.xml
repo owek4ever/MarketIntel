@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="1000" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-02: Seed Frontier &amp; Initiate Crawl — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n Orchestrator" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_api" value="«FastAPI»&#xa;Frontier API :8000" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_mgr" value="«Module»&#xa;FrontierManager" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_sched" value="«Redis Lua»&#xa;Scheduler" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis 7»&#xa;State Store" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Workers" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="820" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: POST /frontier/urls {url, priority, job_type, metadata}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1_val" value="1.1: validate(url, priority, job_type)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_api" target="lf_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="190"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2" value="2: frontier_manager.add_url(url, priority, job_type)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_api" target="lf_mgr" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="225"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3: scheduler.add_url(url, domain, priority, job_type)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_mgr" target="lf_sched" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="265"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4" value="4: EVALSHA ADD_URL_LUA" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_sched" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="300"/></mxGeometry>
+    </mxCell>
+    <mxCell id="lua_note" value="ADD_URL_LUA (atomic):&#xa;1. Check seen:{url_id} — skip if exists&#xa;2. SET seen:{url_id} 1 EX ttl&#xa;3. HSET url:{url_id} all fields&#xa;4. ZADD ready_domains now domain&#xa;5. RPUSH domain_queue:{domain} url_id" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f9a825;fontSize=9;align=left;" vertex="1" parent="1">
+      <mxGeometry x="960" y="265" width="250" height="115" as="geometry"/>
+    </mxCell>
+    <mxCell id="alt_dup" value="alt [already seen — duplicate]" style="swimlane;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="740" y="390" width="240" height="55" as="geometry"/>
+    </mxCell>
+    <mxCell id="m_dup" value="→ RETURN NULL" style="text;html=1;fontSize:10;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="745" y="407" width="230" height="30" as="geometry"/>
+    </mxCell>
+    <mxCell id="m4r" value="4.1: url_id | NULL" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_redis" target="lf_sched" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="460"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: url_id | None" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_sched" target="lf_mgr" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="495"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: url_id | None" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_mgr" target="lf_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="530"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1r" value="1.2: 200 OK {url_id, inserted:true|false}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_api" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="565"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5" value="5: [async] worker_loop() polls get_next_url(wait=True)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_redis" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="620"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5a" value="5.1: EVALSHA LEASE_URL_LUA → ScheduledURL" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="660"/></mxGeometry>
+    </mxCell>
+    <mxCell id="note_continue" value="→ continues as UC-03" style="shape=note;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="700" width="160" height="40" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

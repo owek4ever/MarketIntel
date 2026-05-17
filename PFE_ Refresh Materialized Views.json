@@ -1,0 +1,132 @@
+{
+  "name": "PFE: Refresh Materialized Views",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO competitor_social_score_history (\n    snapshot_date,\n    competitor_id,\n    platform,\n\n    score,\n    engagement_score,\n    reach_score,\n    activity_score,\n    growth_score\n)\nSELECT\n    CURRENT_DATE,\n    competitor_id,\n    platform,\n\n    score,\n    engagement_score,\n    reach_score,\n    activity_score,\n    growth_score\nFROM competitor_social_score\nON CONFLICT (snapshot_date, competitor_id, platform)\nDO UPDATE SET\n    score = EXCLUDED.score,\n    engagement_score = EXCLUDED.engagement_score,\n    reach_score = EXCLUDED.reach_score,\n    activity_score = EXCLUDED.activity_score,\n    growth_score = EXCLUDED.growth_score;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        -240
+      ],
+      "id": "dcd88118-006e-4f61-aaf3-5d70cd15390a",
+      "name": "Add social score snapshot",
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "REFRESH MATERIALIZED VIEW competitor_social_time_series;\n\nREFRESH MATERIALIZED VIEW competitor_social_forecast_regression;\n\nREFRESH MATERIALIZED VIEW competitor_social_forecast_momentum;\n\nREFRESH MATERIALIZED VIEW competitor_social_forecast_smoothed;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        336,
+        -240
+      ],
+      "id": "0194568a-0aae-4d79-9285-cc76fe3263c7",
+      "name": "Refresh social media materialized views",
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        -144
+      ],
+      "id": "d9a5c654-518b-4371-a3ee-f05ff21b6453",
+      "name": "Every Day Do"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "REFRESH MATERIALIZED VIEW competitor_action_plan;\nREFRESH MATERIALIZED VIEW competitor_gap_matrix;\nREFRESH MATERIALIZED VIEW competitor_page_scores;\nREFRESH MATERIALIZED VIEW competitor_seo_summary;\n\nREFRESH MATERIALIZED VIEW page_overall_scores;\nREFRESH MATERIALIZED VIEW page_performance_scores;\nREFRESH MATERIALIZED VIEW page_type_scores;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        -16
+      ],
+      "id": "526aaa07-dbc1-4aad-a971-4703dd79f07f",
+      "name": "Refresh materialized views",
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Add social score snapshot": {
+      "main": [
+        [
+          {
+            "node": "Refresh social media materialized views",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Day Do": {
+      "main": [
+        [
+          {
+            "node": "Refresh materialized views",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add social score snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh materialized views": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "bb073c98-7664-4658-af27-82e69108522a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "fdATlMM26SDrGeS3tMEvv",
+  "tags": []
+}

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  proxy_manager:
+    build: .
+    container_name: proxy_manager
+    ports:
+      - "8888:8888"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=12345678  # Use your redis config password
+      - N8N_PROXY_URL=http://n8n:5678/webhook/proxies
+      - PROXY_HOST=0.0.0.0
+      - PROXY_PORT=8888
+      - HOURLY_LIMIT=50
+      - DAILY_LIMIT=500
+      - SYNC_INTERVAL_SECONDS=300
+    depends_on:
+      - redis
+    restart: unless-stopped

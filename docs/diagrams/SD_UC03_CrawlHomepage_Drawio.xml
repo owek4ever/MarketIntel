@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <!-- ════════════════════════════════════════════════════════════
+         TITLE
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="title" value="UC-03: Crawl Homepage and Discover URLs — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="3200" height="35" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         LIFELINES
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n Orchestrator" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="100" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_api" value="«FastAPI»&#xa;Frontier Ingestion API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="320" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis»&#xa;Frontier Manager" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="540" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Worker-0" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="760" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pool" value="«Playwright»&#xa;BrowserPool" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="980" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_proxy" value="«AI Agent»&#xa;Proxy Manager :8888" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1200" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_target" value="«External»&#xa;Competitor Website" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1420" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_classifier" value="«AI Agent»&#xa;Page Classifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1640" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_seo" value="«AI Agent»&#xa;SEO Analyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1860" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_notifier" value="«HTTP»&#xa;WebhookNotifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="2080" y="60" width="130" height="1000" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         MESSAGES
+    ═══════════════════════════════════════════════════════════════ -->
+    <!-- Step 1: n8n seeds frontier -->
+    <mxCell id="m1" value="1: POST /frontier/urls {url, job_type:'homepage_sitemap_crawl', priority:8}" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;fontSize=10;" edge="1" source="lf_n8n" target="lf_api" parent="1">
+      <mxGeometry x="-0.1" y="0" relative="1" as="geometry"><mxPoint as="offset" y="160"/></mxGeometry>
+    </mxCell>
+    <!-- Step 2: API→Redis add_url Lua -->
+    <mxCell id="m2" value="2: EVALSHA ADD_URL_LUA {url_id, priority, job_type}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_api" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="200"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: url_id (inserted=true)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="230"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2rr" value="2.2: 200 OK {url_id, inserted:true}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_api" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="260"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 3: Worker polls frontier -->
+    <mxCell id="m3" value="3: get_next_url(wait=True) [async polling]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="310"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3a" value="3.1: promote_due_retries(now)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="340"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3b" value="3.2: EVALSHA LEASE_URL_LUA → ScheduledURL" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="370"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 4: Acquire page from pool -->
+    <mxCell id="m4" value="4: pool.get_page() [async context]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="410"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.1: Page instance" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pool" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="435"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 5: Browser navigates via proxy -->
+    <mxCell id="m5" value="5: make_request(page, url) [networkidle]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="465"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5a" value="5.1: HTTP CONNECT tunnel" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_pool" target="lf_proxy" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="495"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5b" value="5.2: store.get_best_proxy(domain)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_proxy" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="520"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5c" value="5.3: proxy string" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_proxy" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="545"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5d" value="5.4: GET / [«HTTPS» via upstream proxy]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_proxy" target="lf_target" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="570"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5e" value="5.5: 200 OK HTML + headers" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_target" target="lf_proxy" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="595"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5f" value="5.6: response, asset_responses, perf_metrics" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pool" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="620"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 6: SEO Analysis -->
+    <mxCell id="m6" value="6: analyze_seo(url, html, response, perf, assets)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="650"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="6.1: seo_report {OnPage, Technical, Content, Assets}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_seo" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="680"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 7: Classify URLs (homepage mode) -->
+    <mxCell id="m7" value="7: [job_type=homepage_sitemap_crawl] classify_urls(internalLinks)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_classifier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="720"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7r" value="7.1: classified_url_map {product, category, blog, …}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_classifier" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="750"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 8: Complete URL in frontier -->
+    <mxCell id="m8" value="8: frontier.complete_url(url_id)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="785"/></mxGeometry>
+    </mxCell>
+
+    <!-- Step 9: Send webhook -->
+    <mxCell id="m9" value="9: send_result_to_webhook(crawl_result_url, payload)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_notifier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="815"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9a" value="9.1: POST /webhook/crawl_result {event, result, homepage_urls} [x-api-key]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_notifier" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="845"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9r" value="9.2: 200 OK" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_notifier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="875"/></mxGeometry>
+    </mxCell>
+
+    <!-- ALT: Failure -->
+    <mxCell id="alt_fail" value="alt [exception thrown]" style="swimlane;startSize=20;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="580" y="890" width="1530" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="m_fail1" value="fail: frontier.fail_url(url_id, error_message)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="930"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m_fail2" value="fail.1: EVALSHA FAIL_URL_LUA → requeued|failed" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="955"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

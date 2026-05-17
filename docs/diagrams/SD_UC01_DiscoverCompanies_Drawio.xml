@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1000" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="UC-01: Discover Competitor Companies — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2300" height="35" as="geometry"/>
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="lf_analyst" value="«Human»&#xa;Competitive Analyst" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="850" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n: Companies Search" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="140" height="850" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_serper" value="«External REST»&#xa;Serper API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="530" y="60" width="130" height="850" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;competitors table" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="750" y="60" width="140" height="850" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_frontier" value="«FastAPI»&#xa;Frontier Ingestion API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="980" y="60" width="140" height="850" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis»&#xa;FrontierManager" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1210" y="60" width="130" height="850" as="geometry"/>
+    </mxCell>
+
+    <!-- 1. Analyst triggers workflow -->
+    <mxCell id="m1" value="1: Trigger 'PFE_Companies_Search' workflow&#xa;    {sector, keywords, market, max_results}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_analyst" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="160"/></mxGeometry>
+    </mxCell>
+
+    <!-- 2. n8n → Serper search (loop for each query) -->
+    <mxCell id="loop1" value="loop [foreach search_query in generated_queries]" style="swimlane;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="195" width="410" height="180" as="geometry"/>
+    </mxCell>
+    <mxCell id="m2" value="2: POST https://google.serper.dev/search&#xa;    {q: query, gl:'tn', num:10, apiKey}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_serper" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="220"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: 200 OK {organic:[{title, link, snippet}], …}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_serper" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="260"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2a" value="2.2: [filter, deduplicate, extract domain + name]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="350"/></mxGeometry>
+    </mxCell>
+
+    <!-- 3. Persist competitors -->
+    <mxCell id="m3" value="3: INSERT INTO competitors (domain, name, metadata)&#xa;    ON CONFLICT (domain) DO NOTHING" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="405"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: new_competitor_ids[]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="440"/></mxGeometry>
+    </mxCell>
+
+    <!-- 4. Build homepage seed URLs -->
+    <mxCell id="m4" value="4: [construct homepage_url = 'https://' + domain]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="480"/></mxGeometry>
+    </mxCell>
+
+    <!-- 5. Seed frontier -->
+    <mxCell id="m5" value="5: POST /frontier/urls/batch&#xa;    [{url: homepage_url, job_type:'homepage_sitemap_crawl', priority:8}]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_frontier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="520"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5a" value="5.1: [for each url] EVALSHA ADD_URL_LUA" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_frontier" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="555"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5b" value="5.2: [url_id, inserted:true/false]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_frontier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="585"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.3: 200 OK {inserted_count, skipped_count}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_frontier" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="620"/></mxGeometry>
+    </mxCell>
+
+    <!-- 6. Summary to analyst -->
+    <mxCell id="m6" value="6: Execution summary: {companies_found, urls_seeded, duplicates_skipped}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_analyst" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="670"/></mxGeometry>
+    </mxCell>
+
+    <!-- alt: Serper rate limit -->
+    <mxCell id="alt_rate" value="alt [429 Too Many Requests from Serper]" style="swimlane;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="700" width="390" height="75" as="geometry"/>
+    </mxCell>
+    <mxCell id="m_rate" value="→ wait(SERPER_RETRY_DELAY) → retry (max 3 attempts)&#xa;→ on permanent failure: log error, skip query" style="text;html=1;fontSize=10;fillColor=none;strokeColor=none;align=left;" vertex="1" parent="1">
+      <mxGeometry x="305" y="720" width="380" height="45" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

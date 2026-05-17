@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="900" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-10: Recover Failed / Timed-Out Jobs — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="1900" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_timer" value="«asyncio»&#xa;recovery_loop timer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_mgr" value="«Module»&#xa;FrontierManager" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_sched" value="«Redis Lua»&#xa;RedisFrontierScheduler" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="140" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis 7»&#xa;State Store" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="750" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Workers" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="970" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+
+    <!-- recovery loop every 30s -->
+    <mxCell id="loop1" value="loop [every 30 seconds — asyncio.sleep(30)]" style="swimlane;startSize=25;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="80" y="140" width="1040" height="530" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: recover_timed_out_urls(limit=100)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_timer" target="lf_mgr" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="180"/></mxGeometry>
+    </mxCell>
+
+    <!-- promote retries -->
+    <mxCell id="m2" value="2: scheduler.promote_due_retries(now=time.time())" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_mgr" target="lf_sched" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="220"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2a" value="2.1: EVALSHA PROMOTE_RETRIES_LUA(now)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_sched" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="260"/></mxGeometry>
+    </mxCell>
+    <mxCell id="lua1" value="PROMOTE_RETRIES_LUA:&#xa;ZRANGEBYSCORE retry_schedule 0 now → due_ids[]&#xa;for each due_id: ZREM retry_schedule, ZADD ready_domains,&#xa;RPUSH domain_queue → makes URL leaseable again" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f9a825;fontSize=9;align=left;" vertex="1" parent="1">
+      <mxGeometry x="750" y="235" width="280" height="85" as="geometry"/>
+    </mxCell>
+    <mxCell id="m2r" value="2.2: promoted_count: int" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_redis" target="lf_mgr" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="340"/></mxGeometry>
+    </mxCell>
+
+    <!-- find expired inflight -->
+    <mxCell id="m3" value="3: scheduler.expired_inflight_ids(now, limit=100)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_mgr" target="lf_sched" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="380"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3a" value="3.1: ZRANGEBYSCORE inflight_timeouts 0 now LIMIT limit" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_sched" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="415"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.2: expired_url_ids[]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_redis" target="lf_mgr" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="450"/></mxGeometry>
+    </mxCell>
+
+    <!-- loop over expired -->
+    <mxCell id="loop2" value="loop [for each expired_url_id]" style="swimlane;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="465" width="560" height="165" as="geometry"/>
+    </mxCell>
+    <mxCell id="m4" value="4: scheduler.fail_url(scheduled_url,&#xa;   error='lease_timeout_recovered')" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_mgr" target="lf_sched" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="505"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4a" value="4.1: EVALSHA FAIL_URL_LUA" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_sched" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="545"/></mxGeometry>
+    </mxCell>
+    <mxCell id="lua2" value="FAIL_URL_LUA:&#xa;IF retries &lt; max_retries:&#xa;  backoff = delay * multiplier^retries&#xa;  ZADD retry_schedule (now+backoff) url_id → 'requeued'&#xa;ELSE:&#xa;  RPUSH failed url_id → 'failed'" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f9a825;fontSize=9;align=left;" vertex="1" parent="1">
+      <mxGeometry x="750" y="510" width="280" height="95" as="geometry"/>
+    </mxCell>
+    <mxCell id="m4b" value="4.2: ZREM inflight_timeouts url_id" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_sched" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="580"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.3: 'requeued' | 'failed'" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_sched" target="lf_mgr" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="615"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m5r" value="5: {recovered_count, requeued_count, failed_count}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_mgr" target="lf_timer" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="695"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m6" value="6: [requeued URLs] LEASE_URL_LUA → new scrape attempt" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_redis" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="730"/></mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>

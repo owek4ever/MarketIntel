@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="1800" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <!-- ════════════════════════════════════════════════════════════
+         TITLE
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="title" value="«System»&#xa;Competitive Intelligence Scraping Platform — Use Case Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="340" y="20" width="980" height="40" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         SYSTEM BOUNDARY
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="system_boundary" value="«System»&#xa;Competitive Intelligence Platform" style="swimlane;startSize=40;strokeColor=#1a237e;fillColor=#e8eaf6;fontSize=13;fontStyle=1;align=center;rounded=1;arcSize=3;" vertex="1" parent="1">
+      <mxGeometry x="340" y="80" width="1000" height="940" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         USE CASES — Discovery / Crawl Subsystem
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="uc1" value="UC-01: Discover Competitor Companies" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="80" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc2" value="UC-02: Seed Frontier &amp; Initiate Crawl" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="170" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc3" value="UC-03: Crawl Homepage &amp; Discover URLs" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="260" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc4" value="UC-04: Scrape Product List Page" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="350" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc5" value="UC-05: Scrape Product Detail Page" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="440" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc6" value="UC-06: Scrape General Content Page" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="530" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc7" value="UC-07: Analyze Page SEO" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="650" y="290" width="220" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc8" value="UC-08: Generate Product Embedding" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="620" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc9" value="UC-09: Manage &amp; Route Proxy Traffic" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="650" y="530" width="220" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc10" value="UC-10: Recover Failed / Timed-Out Jobs" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="650" y="170" width="220" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc11" value="UC-11: Persist Scrape Results to PostgreSQL" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="650" y="620" width="220" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc12" value="UC-12: Generate Competitor Platform Report" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="720" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc13" value="UC-13: Generate Social Media Intel Report" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="350" y="820" width="260" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc14" value="UC-14: AI Chat — Competitive Insights" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="650" y="720" width="220" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="uc15" value="UC-15: Add Report to Vector Store" style="ellipse;shape=umlUseCase;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="system_boundary">
+      <mxGeometry x="650" y="820" width="220" height="60" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         HUMAN ACTORS (left side)
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="actor_analyst" value="«Human»&#xa;Competitive Analyst" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="60" y="200" width="60" height="80" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         AI AGENT ACTORS (right side)
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="actor_scraper_worker" value="«AI Agent»&#xa;Scraper Worker" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="260" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_classifier" value="«AI Agent»&#xa;Page Classifier" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="360" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_seo_analyzer" value="«AI Agent»&#xa;SEO Analyzer" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="460" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_paginator" value="«AI Agent»&#xa;Hybrid Paginator" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="560" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_recovery" value="«AI Agent»&#xa;Recovery Loop" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="140" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_embedding" value="«AI Agent»&#xa;Vector Embedding" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="660" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_proxy" value="«AI Agent»&#xa;Proxy Manager" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1380" y="760" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_n8n" value="«AI Agent»&#xa;n8n Orchestrator" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="60" y="460" width="60" height="80" as="geometry"/>
+    </mxCell>
+
+    <!-- External Actors -->
+    <mxCell id="actor_serper" value="«External System»&#xa;Serper API" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="60" y="100" width="60" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="actor_llm" value="«External System»&#xa;OpenRouter LLM" style="shape=umlActor;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#000000;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="60" y="720" width="60" height="80" as="geometry"/>
+    </mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         ASSOCIATIONS — Human Analyst
+    ═══════════════════════════════════════════════════════════════ -->
+    <mxCell id="e_analyst_uc1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_analyst" target="uc1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_analyst_uc14" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_analyst" target="uc14" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- n8n -->
+    <mxCell id="e_n8n_uc2" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_n8n" target="uc2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_n8n_uc11" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_n8n" target="uc11" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_n8n_uc12" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_n8n" target="uc12" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_n8n_uc13" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_n8n" target="uc13" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_n8n_uc15" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_n8n" target="uc15" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Serper -->
+    <mxCell id="e_serper_uc1" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_serper" target="uc1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- LLM -->
+    <mxCell id="e_llm_uc12" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_llm" target="uc12" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_llm_uc14" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_llm" target="uc14" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Scraper Worker -->
+    <mxCell id="e_sw_uc3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_scraper_worker" target="uc3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_sw_uc4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_scraper_worker" target="uc4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_sw_uc5" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_scraper_worker" target="uc5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_sw_uc6" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_scraper_worker" target="uc6" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Classifier -->
+    <mxCell id="e_clf_uc3" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_classifier" target="uc3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- SEO Analyzer -->
+    <mxCell id="e_seo_uc7" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_seo_analyzer" target="uc7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Paginator -->
+    <mxCell id="e_pag_uc4" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_paginator" target="uc4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Recovery Loop -->
+    <mxCell id="e_rec_uc10" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_recovery" target="uc10" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Vector Embedding -->
+    <mxCell id="e_vec_uc8" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_embedding" target="uc8" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+    <mxCell id="e_vec_uc15" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_embedding" target="uc15" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- Proxy Manager -->
+    <mxCell id="e_proxy_uc9" style="edgeStyle=orthogonalEdgeStyle;" edge="1" source="actor_proxy" target="uc9" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+    <!-- ════════════════════════════════════════════════════════════
+         «include» / «extend» relationships
+    ═══════════════════════════════════════════════════════════════ -->
+    <!-- UC-03 includes UC-07 (SEO analysis on every crawl) -->
+    <mxCell id="inc_uc3_uc7" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc3" target="uc7" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-04 includes UC-07 -->
+    <mxCell id="inc_uc4_uc7" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc4" target="uc7" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-05 includes UC-07 -->
+    <mxCell id="inc_uc5_uc7" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc5" target="uc7" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-05 includes UC-08 (product detail triggers embedding) -->
+    <mxCell id="inc_uc5_uc8" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc5" target="uc8" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-03 includes UC-09 (crawls use proxy) -->
+    <mxCell id="inc_uc3_uc9" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc3" target="uc9" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-04 extends UC-10 -->
+    <mxCell id="ext_uc4_uc10" value="«extend»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc4" target="uc10" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-11 includes UC-15 -->
+    <mxCell id="inc_uc11_uc15" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc11" target="uc15" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <!-- UC-12 includes UC-14 -->
+    <mxCell id="inc_uc12_uc14" value="«include»" style="edgeStyle=orthogonalEdgeStyle;dashed=1;endArrow=open;endFill=0;fontSize=10;" edge="1" source="uc12" target="uc14" parent="system_boundary">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

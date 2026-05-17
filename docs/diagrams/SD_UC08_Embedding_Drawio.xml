@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="900" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="UC-08: Generate Product Embedding — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2500" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n Workflow" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="100" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_embed_api" value="«FastAPI»&#xa;Vector Embedding API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="380" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_factory" value="«Singleton»&#xa;EmbeddingFactory" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="660" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_provider" value="«LocalEmbeddingProvider»&#xa;SentenceTransformer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="940" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_hf" value="«Hugging Face Hub»&#xa;intfloat/multilingual-e5-base" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1220" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;products.description_embedding" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1500" y="60" width="130" height="750" as="geometry"/>
+    </mxCell>
+
+    <!-- startup note -->
+    <mxCell id="startup_note" value="«startup»: EmbeddingFactory.get_provider() [loads model to memory]" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="580" y="100" width="280" height="45" as="geometry"/>
+    </mxCell>
+
+    <!-- Messages -->
+    <mxCell id="m1" value="1: POST /api/v1/products/embed {id, url_hash, title, brand, category, specifications, description}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_embed_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="165"/></mxGeometry>
+    </mxCell>
+
+    <!-- Validation -->
+    <mxCell id="alt_valid" value="alt [text_to_embed is empty]" style="swimlane;startSize=25;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="380" y="195" width="200" height="60" as="geometry"/>
+    </mxCell>
+    <mxCell id="m_valid_err" value="→ 400 Bad Request {detail: 'Not enough valid product data'}" style="text;html=1;fontSize=10;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+      <mxGeometry x="385" y="215" width="190" height="30" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m2" value="2: format_product_text(product) → text_str" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_embed_api" target="lf_factory" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="280"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3" value="3: EmbeddingFactory.get_provider() → LocalEmbeddingProvider" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_embed_api" target="lf_factory" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="315"/></mxGeometry>
+    </mxCell>
+    <!-- opt: first request only -->
+    <mxCell id="opt_load" value="opt [model not yet loaded — cold start]" style="swimlane;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="660" y="335" width="700" height="80" as="geometry"/>
+    </mxCell>
+    <mxCell id="m3a" value="3.1: SentenceTransformer('intfloat/multilingual-e5-base')" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_factory" target="lf_hf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="360"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3b" value="3.2: model weights downloaded and cached" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_hf" target="lf_factory" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="390"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m4" value="4: provider.generate_embedding('passage: ' + text_str)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_embed_api" target="lf_provider" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="435"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4a" value="4.1: model.encode(text, normalize_embeddings=True)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_provider" target="lf_hf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="470"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.2: np.ndarray[768] → .tolist() → List[float]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_hf" target="lf_provider" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="500"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4rr" value="4.3: vector: List[float] length=768" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_provider" target="lf_embed_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="530"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m5" value="5: 200 OK {status:'done', embedding:{product_id, url_hash, embedding:[…], model_used, dimension:768}}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_embed_api" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="565"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m6" value="6: UPDATE products SET description_embedding = $1::vector WHERE url_hash = $2" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="605"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="6.1: UPDATE 1" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="635"/></mxGeometry>
+    </mxCell>
+
+    <!-- Note: HNSW index -->
+    <mxCell id="hnsw_note" value="HNSW cosine index auto-updated on write&#xa;«vector_cosine_ops»" style="shape=note;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1400" y="600" width="230" height="45" as="geometry"/>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

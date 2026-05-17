@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2000" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2200" pageHeight="950" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="title" value="UC-07: Analyze Page SEO — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="2100" height="35" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Worker" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_seo" value="«AI Agent»&#xa;SEO Analyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_onpage" value="«Module»&#xa;OnPageAnalyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_technical" value="«Module»&#xa;TechnicalSEOAnalyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_content" value="«Module»&#xa;ContentAnalyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_assets" value="«Module»&#xa;AssetsAnalyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_jld" value="«Module»&#xa;JsonLdExtractor" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1400" y="60" width="130" height="800" as="geometry"/>
+    </mxCell>
+
+    <mxCell id="m1" value="1: analyze_seo(url, html, response, asset_responses, perf_metrics)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_worker" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1a" value="1.1: soup = BeautifulSoup(html, 'lxml')" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="190"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m2" value="2: OnPageAnalyzer.analyze(soup, url)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_onpage" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="225"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.1: {title, meta_desc, h1_count…h6_count,&#xa;      canonical, hreflang, robots_tag}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_onpage" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="260"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m3" value="3: TechnicalSEOAnalyzer.analyze(response, perf_metrics)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_technical" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="300"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: {status_code, redirect_chain, ttfb_ms,&#xa;      load_time_ms, response_size_bytes, https}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_technical" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="340"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m4" value="4: ContentAnalyzer.analyze(soup, html)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_content" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="380"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.1: {word_count, flesch_kincaid_grade,&#xa;      internal_links[], external_links[],&#xa;      structured_data_types[]}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_content" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="420"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m5" value="5: AssetsAnalyzer.analyze(asset_responses, soup)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_assets" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="465"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.1: {images_without_alt[], large_assets[],&#xa;      blocking_scripts[], total_asset_size_kb}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_assets" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="505"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m6" value="6: JsonLdExtractor.extract(soup)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_jld" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="545"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="6.1: jsonLdData [{@type, name, price, …}]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_jld" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="580"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="m7" value="7: [merge all sub-reports] → SEOReport dataclass" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize:10;" edge="1" source="lf_seo" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="620"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7r" value="7.1: SEOReport {OnPage, Technical, Content, Assets, jsonLdData}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize:10;" edge="1" source="lf_seo" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="665"/></mxGeometry>
+    </mxCell>
+
+    <mxCell id="note" value="SEO Report fields directly map to&#xa;page_snapshots table columns:&#xa;h1_count, word_count,&#xa;flesch_kincaid_grade, seo_flags (JSONB)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;align=left;" vertex="1" parent="1">
+      <mxGeometry x="80" y="720" width="250" height="80" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

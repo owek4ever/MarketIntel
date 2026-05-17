@@ -1,0 +1,1845 @@
+{
+  "name": "PFE: Handle Product Details Scrape Jobs",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.1.222:8082/api/v1/products/embed",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.content.product.normalized_title }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.content.product.embedding_text }}"
+            },
+            {
+              "name": "category",
+              "value": "={{ $json.content.product.category }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -80,
+        -112
+      ],
+      "id": "b4efba1b-4cc2-4403-aa4e-f8f1b7bb835d",
+      "name": "Generate vector embeding",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "price_history",
+          "mode": "list",
+          "cachedResultName": "price_history"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "product_id": "={{ $json.id }}",
+            "price": "={{ $json.current_price }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "price",
+              "displayName": "price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recorded_at",
+              "displayName": "recorded_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        608,
+        -320
+      ],
+      "id": "1e291795-1ca7-467c-87c9-0a6bd09da8c2",
+      "name": "Append recorded price",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "stock_history",
+          "mode": "list",
+          "cachedResultName": "stock_history"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "in_stock": "={{ $json.in_stock }}",
+            "product_id": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "product_id",
+              "displayName": "product_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "in_stock",
+              "displayName": "in_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recorded_at",
+              "displayName": "recorded_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        608,
+        -64
+      ],
+      "id": "311e9c3e-fbf5-485c-a84e-c52f99ffaa5f",
+      "name": "Append recorded stock status",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "products",
+          "mode": "list",
+          "cachedResultName": "products"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "in_stock": "={{ $('parse output').item.json.content.product?.availability ? $('parse output').item.json.content.product.availability.toLowerCase() == 'instock' : !/out/.test($('Product Scrape Result Webhook').item.json.body.result.product.availability.toLowerCase()) }}",
+            "competitor_id": "={{ $('Get domain ID').item.json.result }}",
+            "current_price": "={{ $('parse output').item.json.content.product?.price ? $('parse output').item.json.content.product?.price : !Number($('Product Scrape Result Webhook').item.json.body.result.product.price) ? /(\\d*[,.])?\\d*[.,]?\\d*/.exec($('Product Scrape Result Webhook').item.json.body.result.product.price)[0].replace(\",\", \"\") : parseFloat($('Product Scrape Result Webhook').item.json.body.result.product.price) }}",
+            "url_hash": "={{ $('Product Scrape Result Webhook').item.json.body.result.id }}",
+            "title": "={{ $('parse output').item.json.content.product.normalized_title || null }}",
+            "brand": "={{ $('parse output').item.json.content.product.brand || null }}",
+            "specifications": "={{ $('parse output').item.json.content.product.specs.toJsonString() }}",
+            "on_page_details": "={\n    \"description\": {{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.product.description) }},\n    \"images\": {{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.product.images) }},\n    \"sku\": \"{{ $('Product Scrape Result Webhook').item.json.body.result.product.sku }}\",\n    \"on_page_details\": {{ JSON.stringify((({ main_product_content, ...rest }) => rest)(\n      $('Product Scrape Result Webhook').item.json.body.result.product.on_page_details\n    ))}}\n}",
+            "description_embedding": "={{ $json.embedding.embedding.toJsonString() }}",
+            "category": "={{ $('parse output').item.json.content.product?.category?.replace(/\\s\\(.+\\)$/, \"\") || null }}",
+            "category_page_hash": "={{ $('Product Scrape Result Webhook').item.json.body.result.job_metadata?.category_page?.page_url_hash || null }}"
+          },
+          "matchingColumns": [
+            "url_hash"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "competitor_id",
+              "displayName": "competitor_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "url_hash",
+              "displayName": "url_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "brand",
+              "displayName": "brand",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "specifications",
+              "displayName": "specifications",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "on_page_details",
+              "displayName": "on_page_details",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "description_embedding",
+              "displayName": "description_embedding",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "current_price",
+              "displayName": "current_price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "in_stock",
+              "displayName": "in_stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "category_page_hash",
+              "displayName": "category_page_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "first_seen_at",
+              "displayName": "first_seen_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            },
+            {
+              "id": "last_updated_at",
+              "displayName": "last_updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        112,
+        -112
+      ],
+      "id": "8cece88f-a6d6-46df-8948-d36941482af9",
+      "name": "Add/Update product",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "scrape_jobs",
+          "mode": "list",
+          "cachedResultName": "scrape_jobs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "url_hash": "={{ $json.body.result.id }}",
+            "url": "={{ $json.body.result.url }}",
+            "domain": "={{ $json.body.result.domain }}",
+            "priority": "={{ $json.body.result.priority }}",
+            "retries": "={{ $json.body.result.retries }}",
+            "status": "={{ $json.body.result.status }}",
+            "queued_at": "={{ DateTime.fromSeconds($json.body.result.queued_at) }}",
+            "started_at": "={{ DateTime.fromSeconds($json.body.result.started_at) }}",
+            "finished_at": "={{ DateTime.fromSeconds($json.body.result.completed_at) }}",
+            "job_type": "={{ $json.body.result.job_type }}",
+            "technical_metadata": "={\n  \"status_code\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.httpStatusCode }},\n  \"dom_size\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.domSize }},\n  \"page_size\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.htmlPageSize }},\n  \"dom_interactive\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_interactive }},\n  \"dom_complete\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_complete }},\n  \"first_paint\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.first_paint }},\n  \"resource_count\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.resourceCount }},\n  \"ttfb\": {{ $json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.siteLoadingSpeedTest.ttfb_seconds }}\n}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "url_hash",
+              "displayName": "url_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "domain",
+              "displayName": "domain",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "retries",
+              "displayName": "retries",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "queued_at",
+              "displayName": "queued_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "started_at",
+              "displayName": "started_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "finished_at",
+              "displayName": "finished_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "job_type",
+              "displayName": "job_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "technical_metadata",
+              "displayName": "technical_metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2688,
+        176
+      ],
+      "id": "ebbe4633-987e-4554-be15-4260588d52c0",
+      "name": "Append product detail scrape job",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1572c2fd-6cec-44b7-88fa-b77ae067ed39",
+              "leftValue": "={{ $json.in_stock }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        64
+      ],
+      "id": "c6a57942-7113-4299-ad3a-6fa29dde17e8",
+      "name": "If has stock status",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fc69119c-3378-4352-85a4-6bf6bbceb66d",
+              "leftValue": "={{ $json.current_price }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "48a822fc-82a4-4540-a24b-af5afd41e68f",
+              "leftValue": "={{ Number($json.current_price) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        -192
+      ],
+      "id": "bbf4674e-ecf2-44f4-b2be-5ddde98766e9",
+      "name": "If has price",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "eval",
+        "script": "local score = redis.call('ZSCORE', KEYS[1], ARGV[1])\n\nreturn score",
+        "keys": "frontier:processed_domains",
+        "args": "={{ $json.domain }}"
+      },
+      "type": "@vicenterusso/n8n-nodes-redis-enhanced.redisEnhanced",
+      "typeVersion": 1,
+      "position": [
+        -2464,
+        176
+      ],
+      "id": "57fb1dc9-7dc4-4f10-8549-7eb07a38099f",
+      "name": "Get domain ID",
+      "executeOnce": true,
+      "credentials": {
+        "redis": {
+          "id": "sQCp4TKjABVld6J4",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "page_snapshots",
+          "mode": "list",
+          "cachedResultName": "page_snapshots"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status_code": "={{ $('Product Scrape Result Webhook').item.json.body.result.status_code }}",
+            "h1_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h1Count }}",
+            "word_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.wordsCount }}",
+            "page_url_hash": "={{ $('Product Scrape Result Webhook').item.json.body.result.id }}",
+            "title": "={{ $('Product Scrape Result Webhook').item.json.body.result.title }}",
+            "meta_description": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.metaDescription }}",
+            "text_hash": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.visibleTextHash }}",
+            "inline_styles_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.inlineCssCount }}",
+            "css_files_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.cssFiles }}",
+            "javascript_files_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.javascriptFiles }}",
+            "bullet_list_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.bulletListCount }}",
+            "avg_paragraph_word_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.avgParagraphWordCount }}",
+            "paragraphs_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.paragraphs }}",
+            "external_links_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.externalLinksCount }}",
+            "internal_links_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.internalLinksCount }}",
+            "broken_images_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.brokenImagesCount }}",
+            "not_optimized_images_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.notOptimizedImagesCount }}",
+            "images_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.total_images_on_page }}",
+            "h6_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h6Count }}",
+            "h5_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h5Count }}",
+            "h4_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h4Count }}",
+            "h3_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h3Count }}",
+            "h2_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h2Count }}",
+            "h1_contains_primary_keyword": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h1ContainsPrimaryKeyword }}",
+            "subheadings_contains_primary_keyword": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.subheadingsPrimaryKeywordMatches }}",
+            "has_breadcrumbs": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.hasBreadcrumbs }}",
+            "has_pagination": "={{ $('Product Scrape Result Webhook').item.json.body.result.metadata?.pagination?.type !== \"not_found\" }}",
+            "candidate_primary_keywords": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.lsiCandidates.join(\",\") }}",
+            "primary_keyword": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.primaryKeyword }}",
+            "visible_text_sample": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.visibleTextSample }}",
+            "visible_text_sample_hash": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.visibleTextHash }}",
+            "seo_flags": "={\n  \"scores\": {{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ScoringModule) }},\n  \"has_google_analytics\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.hasGoogleAnalytics }},\n  \"has_Gtag_config\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.hasGtagConfig }},\n  \"has_Gtag_js\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.hasGtagJs }},\n  \"mobile_friendliness_notes\": {{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.mobileFriendlinessNotes) }}\n}",
+            "flesch_kincaid_grade": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.flesch_kincaid_grade }}",
+            "avg_sentence_length": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.avg_sentence_length }}",
+            "text_to_html_ratio": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.textToHtmlRatioPercent }}",
+            "iframe_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.iframes }}",
+            "number_list_count": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.ContentAnalyzer.numberedListCount }}",
+            "language": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.language }}",
+            "mobile_responsive": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.mobileResponsive }}",
+            "is_url_seo_friendly": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.isSeoFriendlyUrl }}",
+            "url_seo_issues": "={{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.seoFriendlyUrlIssues.join(\",\") }}",
+            "headings": "={\n  \"h1\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h1.toJsonString() }},\n  \"h2\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h2.toJsonString() }},\n  \"h3\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h3.toJsonString() }},\n  \"h4\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h4.toJsonString() }},\n  \"h5\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h5.toJsonString() }},\n  \"h6\": {{ $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.h6.toJsonString() }}\n}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "page_url_hash",
+              "displayName": "page_url_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status_code",
+              "displayName": "status_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "final_url",
+              "displayName": "final_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "text_hash",
+              "displayName": "text_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "language",
+              "displayName": "language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "meta_description",
+              "displayName": "meta_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "h1_count",
+              "displayName": "h1_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "h2_count",
+              "displayName": "h2_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "h3_count",
+              "displayName": "h3_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "h4_count",
+              "displayName": "h4_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "h5_count",
+              "displayName": "h5_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "h6_count",
+              "displayName": "h6_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "h1_contains_primary_keyword",
+              "displayName": "h1_contains_primary_keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "subheadings_contains_primary_keyword",
+              "displayName": "subheadings_contains_primary_keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "images_count",
+              "displayName": "images_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "not_optimized_images_count",
+              "displayName": "not_optimized_images_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "broken_images_count",
+              "displayName": "broken_images_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "internal_links_count",
+              "displayName": "internal_links_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "external_links_count",
+              "displayName": "external_links_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "word_count",
+              "displayName": "word_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "paragraphs_count",
+              "displayName": "paragraphs_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "avg_paragraph_word_count",
+              "displayName": "avg_paragraph_word_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bullet_list_count",
+              "displayName": "bullet_list_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "number_list_count",
+              "displayName": "number_list_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "javascript_files_count",
+              "displayName": "javascript_files_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "css_files_count",
+              "displayName": "css_files_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "inline_styles_count",
+              "displayName": "inline_styles_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "primary_keyword",
+              "displayName": "primary_keyword",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "candidate_primary_keywords",
+              "displayName": "candidate_primary_keywords",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_breadcrumbs",
+              "displayName": "has_breadcrumbs",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "has_pagination",
+              "displayName": "has_pagination",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "iframe_count",
+              "displayName": "iframe_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "visible_text_sample",
+              "displayName": "visible_text_sample",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "visible_text_sample_hash",
+              "displayName": "visible_text_sample_hash",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "text_to_html_ratio",
+              "displayName": "text_to_html_ratio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "avg_sentence_length",
+              "displayName": "avg_sentence_length",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "flesch_kincaid_grade",
+              "displayName": "flesch_kincaid_grade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "mobile_responsive",
+              "displayName": "mobile_responsive",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_url_seo_friendly",
+              "displayName": "is_url_seo_friendly",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "url_seo_issues",
+              "displayName": "url_seo_issues",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "headings",
+              "displayName": "headings",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "seo_flags",
+              "displayName": "seo_flags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1760,
+        32
+      ],
+      "id": "b58466f3-fc6d-409e-979a-1bc46b539530",
+      "name": "Append page snapshot",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"prompt\": {{\n    JSON.stringify(\n      \"You are a strict data normalizer for e-commerce products.\\n\" +\n      \"You MUST output valid JSON only.\\n\" +\n      \"No explanations, no markdown, no comments.\\n\" +\n      \"You MUST follow the JSON schema exactly.\\n\\n\" +\n      \"- Do not add fields\\n\" +\n      \"- Do not omit required fields\\n\" +\n      \"- Use null when data is missing\\n\\n\" +\n      \"Normalization rules:\\n\" +\n      \"1. Remove marketing text, store descriptions, shipping info\\n\" +\n      \"2. Remove website names from titles\\n\" +\n      \"3. Keep model numbers EXACTLY as-is\\n\" +\n      \"4. Normalize units:\\n\" +\n      \"   - W, bar, kg, L/min, m\\n\" +\n      \"5. Convert text numbers to numeric values when possible\\n\" +\n      \"6. Lowercase normalized_title except model codes\\n\" +\n      \"7. Extract only factual product attributes\\n\" +\n      \"8. Ignore duplicated content\\n\\n\" +\n      \"embedding_text rules:\\n\" +\n      \"- concise (max ~40 words)\\n\" +\n      \"- include product type + key specs + model\\n\" +\n      \"- no marketing words\\n\\n\" +\n      \"If unsure about a value → use null\" +\n      \"\\ncategory rules: (Choose exactly one category from this allowed list. If none match, return empty object, keywords between parentheses are used for increased context not to for absolute match):\" +\n      $json.target_categories)\n  }},\n\n  \"metadata_description\": {{\n    JSON.stringify(\n      $('Product Scrape Result Webhook').item.json.body.result.product.description || \"\"\n    )\n  }},\n\n  \"product_title\": {{\n    JSON.stringify(\n      $('Product Scrape Result Webhook').item.json.body.result.product.title || \"\"\n    )\n  }},\n\n  \"url\": {{\n    JSON.stringify(\n      $('Product Scrape Result Webhook').item.json.body.result.product.url || \"\"\n    )\n  }},\n\n  \"on_page_description\": {{\n    JSON.stringify(\n      $('Product Scrape Result Webhook').item.json.body.result.product.on_page_details || {}\n    )\n  }},\n\n  \"jsonld_breadcumb_list\": {{\n    JSON.stringify(\n      $('Product Scrape Result Webhook')\n        .item\n        .json\n        .body\n        .result\n        .metadata\n        .signals\n        .breadcrumb_json_ld?.itemListElement\n        ?.map(item => item.name)\n        ?.join(\" -> \") || \"\"\n    )\n  }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1136,
+        32
+      ],
+      "id": "e467052c-38d7-4659-9244-736198eab55a",
+      "name": "Extract data for normalization",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n    \"content\": {{ $json.output }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -272,
+        -112
+      ],
+      "id": "38413047-f92e-489c-9a4a-bf3eeb300f9b",
+      "name": "parse output",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "product_scrape_result",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2896,
+        176
+      ],
+      "id": "b87dff25-8b5f-4caf-b298-e27a1eaf746b",
+      "name": "Product Scrape Result Webhook",
+      "webhookId": "7b7de794-1028-4441-9fa9-25b853dca7a2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Djt21fTa5uolGQcx",
+          "name": "n8n webhook auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "mistralai/mistral-nemo",
+          "mode": "list",
+          "cachedResultName": "mistralai/mistral-nemo"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "timeout": 60000,
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -944,
+        240
+      ],
+      "id": "9e8d2ba6-b01c-4409-8370-f634cff239bf",
+      "name": "google/gemma e4b",
+      "credentials": {
+        "openAiApi": {
+          "id": "Gt8tHv1ndFeYRSFJ",
+          "name": "Open Router Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3ec4892d-b262-4c27-b9d3-f2ef621614f8",
+              "leftValue": "={{ $json.output.product }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -624,
+        32
+      ],
+      "id": "057b6be0-d4ee-4280-8280-b25b53fcc0ff",
+      "name": "If product is relevant to target categories",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "pages",
+          "mode": "list",
+          "cachedResultName": "pages"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "url_hash": "={{ $('Product Scrape Result Webhook').item.json.body.result.id }}",
+            "page_metadata": "={\n    \"meta_types\": {{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.metadata.signals.meta_types) }},\n    \"json_ld\": {{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.metadata.signals.json_ld) }},\n    \"is_product_relevant\": false\n}"
+          },
+          "matchingColumns": [
+            "url_hash"
+          ],
+          "schema": [
+            {
+              "id": "url_hash",
+              "displayName": "url_hash",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "competitor_id",
+              "displayName": "competitor_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "normalized_url",
+              "displayName": "normalized_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "page_type",
+              "displayName": "page_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "page_metadata",
+              "displayName": "page_metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "technical_metadata",
+              "displayName": "technical_metadata",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "first_seen_at",
+              "displayName": "first_seen_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_seen_at",
+              "displayName": "last_seen_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "next_run_at",
+              "displayName": "next_run_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_success_at",
+              "displayName": "last_success_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_failure_at",
+              "displayName": "last_failure_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "last_error",
+              "displayName": "last_error",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -272,
+        160
+      ],
+      "id": "c596978a-2ee8-4a9f-ab04-dc3962ebee8a",
+      "name": "Mark the product as irrelevant",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "=PAGE URL: {{ $json.url }}\\nPRODUCT TITLE: {{ $json.product_title || \"\" }}\\nPAGE METADATA DESCRIPTION: {{ $json.metadata_description || \"\" }}\\nBREADCRUMB LIST: {{ $json.jsonld_breadcumb_list || \"\" }}\\n{{ Object.entries($json.on_page_description || {}).map(([key, val]) => `ON PAGE ${key.toUpperCase()}: ${val || \"\"}`).join(\"\\n\\n\") }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": [\"object\", \"null\"],\n  \"additionalProperties\": false,\n  \"properties\": {\n    \"product\": {\n      \"type\": [\"object\", \"null\"],\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"normalized_title\": {\n          \"type\": \"string\",\n          \"minLength\": 3,\n          \"description\": \"Cleaned title without brand suffix, normalized units, lowercase except model\"\n        },\n        \"embedding_text\": {\n          \"type\": \"string\",\n          \"minLength\": 10,\n          \"description\": \"Compact semantic string for embeddings (MUST BE IN ENGLISH)\"\n        },\n        \"product_relevant_description\": {\n          \"type\": \"string\",\n          \"description\": \"Cleaned description without marketing text\"\n        },\n        \"price\": {\n          \"type\": [\"float\", \"null\"]\n        },\n        \"availability\": {\n          \"type\": \"string\",\n          \"enum\": [\"InStock\", \"OutOfStock\", \"Unknown\"]\n        },\n        \"brand\": {\n          \"type\": [\"string\", \"null\"]\n        },\n        \"category\": {\n          \"type\": [\"string\", \"null\"]\n        },\n        \"model\": {\n          \"type\": [\"string\", \"null\"]\n        },\n        \"specs\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": [\"string\", \"number\", \"null\"]\n          }\n        }\n      },\n      \"required\": [\n        \"category\",\n        \"brand\",\n        \"normalized_title\",\n        \"embedding_text\",\n        \"product_relevant_description\",\n        \"availability\",\n        \"price\",\n        \"specs\"\n      ]\n    }\n  }\n}",
+        "options": {
+          "systemPromptTemplate": "=You are a strict BTP product normalizer for construction materials, chantier equipment, BTP tools, industrial products, and professional building supplies.\n\nConsumer electronics are ALWAYS irrelevant.\n\nReturn valid JSON only (DO NOT WRAP THE JSON TEXT WITH THESE \"```json\" AND \"```\" AT THE END).\nNo explanations, markdown, comments, or extra text.\n\nFollow the JSON schema exactly:\n\ndo not add fields\ndo not omit required fields\nuse null if missing or uncertain\nnever guess values\n\nRules:\n\nRemove marketing text, store info, shipping info, duplicated content\nRemove website/store names from titles\nKeep model numbers EXACTLY as written\nNormalize units only: W, kW, bar, kg, g, L, L/min, mm, cm, m, m², V, A, Hz\nConvert written numbers to numeric values when possible\nnormalized_title = lowercase only, except model codes/technical references\nExtract only factual technical attributes (dimensions, weight, power, pressure, material, usage, product type)\nIgnore subjective descriptions\n\nembedding_text:\n\nmax ~40 words\ninclude product type + main specs + model\nno marketing words\n\ncategory:\nChoose ONE only from:\nproduits rouges (bricks, slabs),\nciment,\nfer a beton,\ntreillis soudes,\nchimie de batiment,\ncolle de batiment,\nsysteme auto-nivelant,\ncoffrage vertical,\nsysteme echafaudage,\nbois blancs,\nbois de coffrage,\nbois contreplaques,\nisolation et etancheite,\nmateriel de batiment et travaux publics (BTP),\nelectroportatifs (outillage electrique),\nquincaillerie,\nequipements de chantiers,\ncarrelage,\nsystemes secs et humides\n\nIf product clearly matches one category → return normal JSON\n\nIf not relevant → ignore schema and return null:\n\nIf \"on_page_details\" property contains \"main_product_full_content\" property, try to identify the price and stock level of the product that matches the product title provided.\n\nBe strict. Only classify with high confidence."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -944,
+        32
+      ],
+      "id": "9478d7d7-56bb-4e69-8006-ea6da2dfbb31",
+      "name": "AI Information Extractor",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "target_categories",
+          "mode": "list",
+          "cachedResultName": "target_categories"
+        },
+        "returnAll": true,
+        "options": {
+          "outputColumns": [
+            "normalized_name",
+            "category_description",
+            "category_keywords"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1552,
+        32
+      ],
+      "id": "7aefd9f1-a64a-4fcd-bad0-324860e81a1b",
+      "name": "fetch target categories",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "87872ff2-2374-4a28-84d1-1d2270e3b3f8",
+              "name": "target_categories",
+              "value": "={{ $input.all().map(el => el.json).map(el => el.normalized_name).join(\"\\n\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1344,
+        32
+      ],
+      "id": "cb48db63-f71c-454d-bcb2-e61b3dcad7d2",
+      "name": "convert categories to text",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d2922c66-309a-4d01-aba0-b5b8b50e74e4",
+              "leftValue": "={{ $json.action }}",
+              "rightValue": "no_change",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2064,
+        176
+      ],
+      "id": "30274e84-5b15-4134-8020-a66109089f3b",
+      "name": "If content hash is different"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH upsert AS (\n    INSERT INTO pages (\n        url_hash,\n        competitor_id,\n        url,\n        normalized_url,\n        recent_content_hash,\n        page_type,\n        page_metadata,\n        technical_metadata,\n        last_success_at,\n        last_failure_at,\n        last_error\n    )\n    VALUES (\n        $1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb,\n        $9,\n        $10,\n        $11\n    )\n    ON CONFLICT (url_hash)\n    DO UPDATE SET\n        competitor_id = EXCLUDED.competitor_id,\n        url = EXCLUDED.url,\n        normalized_url = EXCLUDED.normalized_url,\n        page_type = EXCLUDED.page_type,\n        page_metadata = EXCLUDED.page_metadata,\n        technical_metadata = EXCLUDED.technical_metadata,\n        recent_content_hash = EXCLUDED.recent_content_hash,\n        last_success_at = EXCLUDED.last_success_at,\n        last_failure_at = $10,\n        last_error = $11\n    WHERE pages.recent_content_hash IS DISTINCT FROM EXCLUDED.recent_content_hash\n    RETURNING url_hash, 'changed' AS action\n)\n\nSELECT * FROM upsert\n\nUNION ALL\n\nSELECT $1, 'no_change'\nWHERE NOT EXISTS (SELECT 1 FROM upsert);",
+        "options": {
+          "queryReplacement": "={{ $('Product Scrape Result Webhook').item.json.body.result.id }},\n{{ $json.result }},\n{{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.url) }},\n{{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.final_url) }},\n{{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.OnPageAnalyzer.visibleTextHash) }},\n{{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.metadata.page_type) }},\n\n{{ JSON.stringify({\n    meta_types: $('Product Scrape Result Webhook').item.json.body.result.metadata.signals.meta_types,\n    json_ld: $('Product Scrape Result Webhook').item.json.body.result.metadata.signals.json_ld\n}) }},\n\n{{ JSON.stringify({\n    status_code: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.httpStatusCode,\n    dom_size: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.domSize,\n    page_size: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.htmlPageSize,\n    dom_interactive: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_interactive,\n    dom_complete: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.dom_complete,\n    first_paint: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.first_paint,\n    resource_count: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.resourceCount,\n    ttfb: $('Product Scrape Result Webhook').item.json.body.result.seo_report.seo_attributes.TechnicalSEOAnalyzer.siteLoadingSpeedTest.ttfb_seconds\n}) }},\n\n{{ JSON.stringify(DateTime.fromSeconds($('Product Scrape Result Webhook').item.json.body.result.completed_at).toISO()) }},\n\n{{ DateTime.fromSeconds($('Product Scrape Result Webhook').item.json.body.result.completed_at) }},\n\n{{ JSON.stringify($('Product Scrape Result Webhook').item.json.body.result.last_error) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -2272,
+        176
+      ],
+      "id": "356bafcb-63fc-4649-a0e3-8d41aa970272",
+      "name": "Add/Update scraped page",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "xuGN2F4JMRSIbROt",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generate vector embeding": {
+      "main": [
+        [
+          {
+            "node": "Add/Update product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add/Update product": {
+      "main": [
+        [
+          {
+            "node": "If has stock status",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If has price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append product detail scrape job": {
+      "main": [
+        [
+          {
+            "node": "Get domain ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If has stock status": {
+      "main": [
+        [
+          {
+            "node": "Append recorded stock status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If has price": {
+      "main": [
+        [
+          {
+            "node": "Append recorded price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get domain ID": {
+      "main": [
+        [
+          {
+            "node": "Add/Update scraped page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append page snapshot": {
+      "main": [
+        [
+          {
+            "node": "fetch target categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract data for normalization": {
+      "main": [
+        [
+          {
+            "node": "AI Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse output": {
+      "main": [
+        [
+          {
+            "node": "Generate vector embeding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product Scrape Result Webhook": {
+      "main": [
+        [
+          {
+            "node": "Append product detail scrape job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "google/gemma e4b": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If product is relevant to target categories": {
+      "main": [
+        [
+          {
+            "node": "parse output",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark the product as irrelevant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "If product is relevant to target categories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch target categories": {
+      "main": [
+        [
+          {
+            "node": "convert categories to text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "convert categories to text": {
+      "main": [
+        [
+          {
+            "node": "Extract data for normalization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If content hash is different": {
+      "main": [
+        [
+          {
+            "node": "Append page snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add/Update scraped page": {
+      "main": [
+        [
+          {
+            "node": "If content hash is different",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "1cb1d4f6-475f-4806-a35d-590a91c8d513",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "093640ed3f7f365fa13e57d2c5d3c5c7f7081888ccb6f5ecc6c4f209d7247106"
+  },
+  "id": "vGwel6bnpjlj4O85Cp5UI",
+  "tags": []
+}

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1400" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="UC-04: Scrape Product List Page (Paginated) — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="3200" height="35" as="geometry"/>
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="lf_n8n" value="«AI Agent»&#xa;n8n: Handle Product List" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="80" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Worker" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="300" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis»&#xa;FrontierManager" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="520" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pool" value="«Playwright»&#xa;BrowserPool" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="740" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_seo" value="«AI Agent»&#xa;SEO Analyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="960" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_clf" value="«AI Agent»&#xa;Page Classifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1180" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_paginclf" value="«AI Agent»&#xa;PaginationTypeClassifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1400" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_paginator" value="«AI Agent»&#xa;HybridPaginator" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1620" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_target" value="«External»&#xa;Competitor Website" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1840" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_notifier" value="«HTTP»&#xa;WebhookNotifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="2060" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;Database (via n8n)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="2280" y="60" width="130" height="1200" as="geometry"/>
+    </mxCell>
+
+    <!-- MESSAGES -->
+    <!-- 1. Worker leases URL -->
+    <mxCell id="m1" value="1: frontier.get_next_url() → ScheduledURL {job_type=null/category}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="160"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1r" value="1.1: ScheduledURL {url, domain, priority}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="185"/></mxGeometry>
+    </mxCell>
+
+    <!-- 2. Pool + navigate -->
+    <mxCell id="m2" value="2: pool.get_page() + make_request(page, url)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="220"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2a" value="2.1: «HTTPS» GET category_url" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_pool" target="lf_target" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="250"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2b" value="2.2: 200 OK HTML + JS assets" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_target" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="275"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m2r" value="2.3: (response, asset_responses, perf_data)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pool" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="300"/></mxGeometry>
+    </mxCell>
+
+    <!-- 3. SEO analysis -->
+    <mxCell id="m3" value="3: analyze_seo(url, html, response, perf, assets)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="335"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.1: seo_report {jsonLdData, internalLinks, headings, …}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_seo" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="360"/></mxGeometry>
+    </mxCell>
+
+    <!-- 4. Page Classification -->
+    <mxCell id="m4" value="4: classify_page_from_html(page, html, url, seo_report)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_clf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="400"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4a" value="4.1: detect_pagination_type(page) [DOM scan]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_clf" target="lf_paginclf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="430"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4ar" value="4.2: PaginationTypeInfo {type:'numbered', selector:'…'}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_paginclf" target="lf_clf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="455"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.3: ScrapeJob {page_type: PRODUCT_LIST_PAGINATED, pagination_info}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_clf" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="480"/></mxGeometry>
+    </mxCell>
+
+    <!-- 5. Paginator loop -->
+    <mxCell id="loop_box" value="loop [page ≤ max_pages=50 AND next_page_exists]" style="swimlane;startSize=25;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="300" y="510" width="1700" height="280" as="geometry"/>
+    </mxCell>
+    <mxCell id="m5" value="5: HybridPaginator.extract_products_while_paginating()" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_paginator" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="520"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5a" value="5.1: extract_product_list_items(page) → [ProductCard,…]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_paginator" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="560"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5ar" value="5.2: [ProductCard list for current page]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pool" target="lf_paginator" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="590"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5b" value="5.3: click_next_page() / load_more()" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_paginator" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="625"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5c" value="5.4: «HTTPS» next page request" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_pool" target="lf_target" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="655"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5cr" value="5.5: 200 OK HTML (next page)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_target" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="680"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m5r" value="5.6: accumulated products [ ]" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_paginator" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="770"/></mxGeometry>
+    </mxCell>
+
+    <!-- 6. Complete in frontier -->
+    <mxCell id="m6" value="6: frontier.complete_url(url_id)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="810"/></mxGeometry>
+    </mxCell>
+
+    <!-- 7. Webhook notification -->
+    <mxCell id="m7" value="7: POST /webhook/product_list_scrape_result {products[], seo_report, metadata}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_notifier" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="850"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m7p" value="7.1 [async]: worker sends to notifier" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_notifier" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="830"/></mxGeometry>
+    </mxCell>
+
+    <!-- 8. n8n persists to DB -->
+    <mxCell id="m8" value="8: INSERT INTO pages, page_snapshots, products, price_history" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="900"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m8r" value="8.1: rows inserted" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pg" target="lf_n8n" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="930"/></mxGeometry>
+    </mxCell>
+
+    <!-- 9. Seed detail URLs back to frontier -->
+    <mxCell id="m9" value="9: POST /frontier/urls/batch {product_detail_urls, job_type:'extract_product_detail'}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="965"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>

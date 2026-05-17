@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxGraphModel dx="2400" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="1300" math="0" shadow="0">
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+
+    <mxCell id="title" value="UC-05: Scrape Product Detail Page — Sequence Diagram" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+      <mxGeometry x="50" y="10" width="3200" height="35" as="geometry"/>
+    </mxCell>
+
+    <!-- LIFELINES -->
+    <mxCell id="lf_n8n_in" value="«AI Agent»&#xa;n8n: Product List Handler" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="60" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_api" value="«FastAPI»&#xa;Frontier Ingestion API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="260" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_redis" value="«Redis»&#xa;FrontierManager" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="460" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_worker" value="«AI Agent»&#xa;Scraper Worker" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="660" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pool" value="«Playwright»&#xa;BrowserPool" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="860" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_target" value="«External»&#xa;Competitor Website" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1060" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_seo" value="«AI Agent»&#xa;SEO Analyzer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1260" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_clf" value="«AI Agent»&#xa;Page Classifier" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1460" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_extractor" value="«Module»&#xa;ProductDetailExtractor" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1660" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_embed" value="«AI Agent»&#xa;Vector Embedding API" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="1860" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_hf" value="«Hugging Face»&#xa;SentenceTransformer" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="2060" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_n8n_out" value="«AI Agent»&#xa;n8n: Product Detail Handler" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="2260" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+    <mxCell id="lf_pg" value="«PostgreSQL»&#xa;Database" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+      <mxGeometry x="2460" y="60" width="130" height="1150" as="geometry"/>
+    </mxCell>
+
+    <!-- MESSAGES -->
+    <!-- 1. n8n seeds product detail URL -->
+    <mxCell id="m1" value="1: POST /frontier/urls {url=product_detail_url, job_type:null, priority:5}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n_in" target="lf_api" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="155"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1a" value="1.1: ADD_URL_LUA → dedup check + enqueue" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_api" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="185"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m1b" value="1.2: 200 OK {url_id, inserted:true}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_api" target="lf_n8n_in" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="215"/></mxGeometry>
+    </mxCell>
+
+    <!-- 2. Worker leases -->
+    <mxCell id="m2" value="2: LEASE_URL_LUA → ScheduledURL {url, domain}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_redis" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="255"/></mxGeometry>
+    </mxCell>
+
+    <!-- 3. Navigate -->
+    <mxCell id="m3" value="3: make_request(page, product_url) [networkidle]" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="290"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3a" value="3.1: «HTTPS via proxy» GET /product/slug" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_pool" target="lf_target" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="320"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3r" value="3.2: 200 OK HTML (JSON-LD product schema)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_target" target="lf_pool" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="350"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m3rr" value="3.3: (response, assets, perf)" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pool" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="375"/></mxGeometry>
+    </mxCell>
+
+    <!-- 4. SEO -->
+    <mxCell id="m4" value="4: analyze_seo(url, html, response, perf, assets)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_seo" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="410"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m4r" value="4.1: seo_report {jsonLdData, TechnicalSEO, OnPageAnalyzer}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_seo" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="440"/></mxGeometry>
+    </mxCell>
+
+    <!-- 5. Classification -->
+    <mxCell id="m5" value="5: classify_page(page, html, url, seo_report)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_clf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="475"/></mxGeometry>
+    </mxCell>
+    <!-- Decision: schema_product found -->
+    <mxCell id="alt_pd" value="alt [has_schema_product OR single Product JSON-LD + heading match]" style="swimlane;startSize=25;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+      <mxGeometry x="1460" y="505" width="240" height="100" as="geometry"/>
+    </mxCell>
+    <mxCell id="m5r" value="5.1: ScrapeJob {page_type: PRODUCT_DETAIL, signals:{product_json_ld}}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_clf" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="520"/></mxGeometry>
+    </mxCell>
+
+    <!-- 6. Extract product detail -->
+    <mxCell id="m6" value="6: extract_product_detail(page, html, product_json_ld, url)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_extractor" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="580"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m6r" value="6.1: ProductData {title, price, brand, specs, in_stock, images}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_extractor" target="lf_worker" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="615"/></mxGeometry>
+    </mxCell>
+
+    <!-- 7. Complete frontier -->
+    <mxCell id="m7" value="7: frontier.complete_url(url_id)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_redis" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="650"/></mxGeometry>
+    </mxCell>
+
+    <!-- 8. Webhook to n8n detail handler -->
+    <mxCell id="m8" value="8: POST /webhook/product_scrape_result {product, seo_report, job_metadata}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_worker" target="lf_n8n_out" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="690"/></mxGeometry>
+    </mxCell>
+
+    <!-- 9. n8n calls embedding API -->
+    <mxCell id="m9" value="9: POST /api/v1/products/embed {id, title, brand, specs, …}" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n_out" target="lf_embed" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="730"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9a" value="9.1: SentenceTransformer.encode(text)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_embed" target="lf_hf" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="760"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9b" value="9.2: vector[768] float32" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_hf" target="lf_embed" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="790"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m9r" value="9.3: 200 OK {embedding: vector[768], model_used, dimension:768}" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_embed" target="lf_n8n_out" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="820"/></mxGeometry>
+    </mxCell>
+
+    <!-- 10. n8n upserts to PostgreSQL -->
+    <mxCell id="m10" value="10: UPSERT INTO products (url_hash, title, price, specs, description_embedding) ON CONFLICT UPDATE" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n_out" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="860"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10a" value="10.1: INSERT INTO price_history (product_id, price)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n_out" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="895"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10b" value="10.2: INSERT INTO stock_history (product_id, in_stock)" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=10;" edge="1" source="lf_n8n_out" target="lf_pg" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="930"/></mxGeometry>
+    </mxCell>
+    <mxCell id="m10r" value="10.3: product_id, rows inserted" style="edgeStyle=orthogonalEdgeStyle;html=1;dashed=1;fontSize=10;" edge="1" source="lf_pg" target="lf_n8n_out" parent="1">
+      <mxGeometry x="-0.1" relative="1" as="geometry"><mxPoint as="offset" y="960"/></mxGeometry>
+    </mxCell>
+
+  </root>
+</mxGraphModel>
