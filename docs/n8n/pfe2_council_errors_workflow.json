@@ -1,0 +1,36 @@
+{
+  "name": "PFE2 Council Errors",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "node-error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE dashboard.council_sessions\nSET status = 'failed',\n    error_message = LEFT('n8n execution error: ' || $execution.error.message, 500)\nWHERE status = 'running'\n  AND created_at < NOW() - INTERVAL '10 minutes'",
+        "options": {}
+      },
+      "id": "node-mark-failed",
+      "name": "Mark Stale Sessions Failed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [460, 300],
+      "credentials": { "postgres": { "id": "pg-cred", "name": "PFE2 Postgres" } }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [[{ "node": "Mark Stale Sessions Failed", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [{ "name": "pfe2" }]
+}
