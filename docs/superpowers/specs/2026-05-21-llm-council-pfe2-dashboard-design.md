@@ -271,20 +271,35 @@ A new standalone workflow. Does not modify any existing workflow.
 
 8.  Chairman (HTTP Request → OpenRouter):
     System: "You are a chairman synthesizing 5 advisor responses labeled A–E.
-             Output valid JSON only:
-             {\"agreements\": str, \"clashes\": str,
-              \"blind_spots\": str, \"one_action\": str}.
-             If fewer than 5 responses, note the missing lens."
+             Output valid JSON only — no prose outside the object:
+             {
+               \"agreements\":  [\"...\"],
+               \"clashes\":     [{\"lenses\": [\"A\", \"B\"], \"topic\": \"...\", \"summary\": \"...\"}],
+               \"blind_spots\": \"...\",
+               \"next_step\":   \"...\",
+               \"per_lens_summary\": {
+                 \"contrarian\": \"...\", \"first_principles\": \"...\",
+                 \"expansionist\": \"...\", \"outsider\": \"...\", \"executor\": \"...\"
+               }
+             }
+             If fewer than 5 responses are present, omit missing lenses from
+             per_lens_summary and note the gap in blind_spots."
     User: Advisor outputs assembled as:
           "A (Contrarian): <text>\nB (First Principles): <text>\n..."
-    max_tokens: 600
+    max_tokens: 700
 
 9.  Build HTML (Code node):
     Produces self-contained HTML (no external CSS or JS):
     - Header: question + domain profile + competitor name (or "All")
-    - 5 advisor cards in 2-column grid
-      (failed lenses show "Response unavailable for this lens")
-    - Chairman verdict: agreements, clashes, blind spots, one-action callout block
+    - 5 advisor cards in 2-column grid — each card renders
+      per_lens_summary[lens] (the chairman's 1-2 sentence digest),
+      not the full raw response (too long for a card)
+    - Failed lenses show "Response unavailable for this lens"
+    - Chairman verdict section:
+        agreements  → bulleted list (rendered from array)
+        clashes     → one card per clash showing lens pair, topic, summary
+        blind_spots → paragraph
+        next_step   → prominent callout block
     - Footer: ISO 8601 timestamp
 
 10. Postgres UPDATE:
@@ -297,16 +312,23 @@ A new standalone workflow. Does not modify any existing workflow.
 
     advisor_responses JSONB shape:
     {
-      "contrarian":       "<150-300 word response>",
-      "first_principles": "<150-300 word response>",
-      "expansionist":     "<150-300 word response>",
-      "outsider":         "<150-300 word response>",
-      "executor":         "<150-300 word response>",
+      "contrarian":       "<full 150-300 word raw response>",
+      "first_principles": "<full 150-300 word raw response>",
+      "expansionist":     "<full 150-300 word raw response>",
+      "outsider":         "<full 150-300 word raw response>",
+      "executor":         "<full 150-300 word raw response>",
       "chairman": {
-        "agreements":  "<text>",
-        "clashes":     "<text>",
-        "blind_spots": "<text>",
-        "one_action":  "<text>"
+        "agreements":  ["...", "..."],
+        "clashes":     [{"lenses": ["Contrarian", "Executor"], "topic": "...", "summary": "..."}],
+        "blind_spots": "...",
+        "next_step":   "...",
+        "per_lens_summary": {
+          "contrarian":       "1-2 sentence chairman digest",
+          "first_principles": "...",
+          "expansionist":     "...",
+          "outsider":         "...",
+          "executor":         "..."
+        }
       }
     }
 ```
