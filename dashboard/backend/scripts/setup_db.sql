@@ -1,5 +1,4 @@
 -- PFE2 Database Setup (without timescaledb/pgvector)
-CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- COMPETITORS
 CREATE TABLE IF NOT EXISTS competitors (
@@ -245,14 +244,14 @@ CREATE TABLE IF NOT EXISTS target_categories (
 CREATE OR REPLACE FUNCTION normalize_text(input TEXT)
 RETURNS TEXT AS $$
 BEGIN
-    RETURN trim(regexp_replace(lower(unaccent(input)), '\s+', ' ', 'g'));
+    RETURN trim(regexp_replace(lower(input), '\s+', ' ', 'g'));
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
--- SEO SCORES VIEW
+-- SEO SCORES VIEW (DISTINCT ON ensures one row per page — latest snapshot wins)
 CREATE OR REPLACE VIEW page_seo_scores AS
 WITH base AS (
-    SELECT
+    SELECT DISTINCT ON (ps.page_url_hash)
         ps.id, ps.page_url_hash,
         COALESCE((ps.seo_flags->'scores'->>'content_score_percent')::NUMERIC, 70) AS content_score,
         COALESCE((ps.seo_flags->'scores'->>'on_page_score_percent')::NUMERIC, 70) AS on_page_score,
@@ -266,6 +265,7 @@ WITH base AS (
             (CASE WHEN ps.external_links_count > 0 THEN 100 ELSE 80 END) * 0.15
         ) AS ux_score
     FROM page_snapshots ps
+    ORDER BY ps.page_url_hash, ps.created_at DESC
 )
 SELECT id, page_url_hash,
     ROUND(content_score,2) AS content_score,
@@ -537,3 +537,64 @@ CREATE TABLE IF NOT EXISTS dashboard.saved_reports (
     filters JSONB NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- WEBHOOK EVENTS (inbound from n8n / scraper)
+CREATE TABLE IF NOT EXISTS dashboard.webhook_events (
+    id BIGSERIAL PRIMARY KEY,
+    source  TEXT NOT NULL,          -- 'n8n' | 'scraper'
+    event   TEXT NOT NULL,          -- e.g. 'report.completed'
+    payload JSONB NOT NULL DEFAULT '{}',
+    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_wh_source_event ON dashboard.webhook_events(source, event);
+CREATE INDEX IF NOT EXISTS idx_wh_received_at  ON dashboard.webhook_events(received_at DESC);
+
+-- COMPETITOR TOP ISSUES (ranked SEO issues per competitor)
+CREATE MATERIALIZED VIEW IF NOT EXISTS competitor_top_issues AS
+WITH issue_stats AS (
+    SELECT
+        cap.competitor_id,
+        cap.issue,
+        cap.total_affected_pages AS occurrence_count,
+        cap.total_affected_pages AS affected_pages,
+        cap.total_affected_pages::numeric AS total_impact,
+        1::numeric AS avg_impact,
+        ROUND(cap.total_affected_pages::numeric / NULLIF(p_counts.total_pages, 0), 4) AS impact_ratio,
+        ROUND(cap.total_affected_pages::numeric / NULLIF(p_counts.total_pages, 0), 4) AS coverage_ratio,
+        ROUND(cap.total_affected_pages::numeric *
+              ROUND(cap.total_affected_pages::numeric / NULLIF(p_counts.total_pages, 0), 4), 4) AS priority_score
+    FROM competitor_action_plan cap
+    JOIN (SELECT competitor_id, COUNT(*) AS total_pages FROM pages GROUP BY competitor_id) p_counts
+        ON p_counts.competitor_id = cap.competitor_id
+)
+SELECT
+    competitor_id, issue,
+    occurrence_count, affected_pages,
+    total_impact, avg_impact,
+    impact_ratio, coverage_ratio, priority_score,
+    RANK() OVER (PARTITION BY competitor_id ORDER BY priority_score DESC) AS rank
+FROM issue_stats;
+
+CREATE INDEX IF NOT EXISTS idx_cti_competitor ON competitor_top_issues(competitor_id);
+
+-- COUNCIL SESSIONS (LLM Council interactive feature)
+CREATE TABLE IF NOT EXISTS dashboard.council_sessions (
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id           UUID NOT NULL REFERENCES dashboard.users(id) ON DELETE CASCADE,
+    question          TEXT NOT NULL,
+    domain_profile    VARCHAR(20) NOT NULL DEFAULT 'general'
+                          CHECK (domain_profile IN ('general','social','market','seo')),
+    competitor_id     INT REFERENCES competitors(id) ON DELETE SET NULL,
+    status            VARCHAR(20) NOT NULL DEFAULT 'pending'
+                          CHECK (status IN ('pending','running','completed','failed')),
+    advisor_responses JSONB,
+    html_report       TEXT,
+    error_message     TEXT,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at      TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_council_user
+    ON dashboard.council_sessions (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_council_competitor
+    ON dashboard.council_sessions (competitor_id)
+    WHERE competitor_id IS NOT NULL;
