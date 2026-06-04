@@ -16,7 +16,9 @@ dependencies = [
     "slowapi>=0.1.9",
     "python-multipart>=0.0.9",
     "email-validator>=2.3.0",
+    "aiosmtplib>=3.0.0",
 ]
+
 
 [tool.uv]
 dev-dependencies = [

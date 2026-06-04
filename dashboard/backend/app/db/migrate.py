@@ -60,6 +60,33 @@ CREATE TABLE IF NOT EXISTS dashboard.saved_reports (
 
 CREATE INDEX IF NOT EXISTS idx_saved_reports_user
     ON dashboard.saved_reports (user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS dashboard.webhook_events (
+    id          BIGSERIAL PRIMARY KEY,
+    source      VARCHAR(50) NOT NULL,
+    event       TEXT NOT NULL,
+    payload     JSONB NOT NULL DEFAULT '{}',
+    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_source
+    ON dashboard.webhook_events (source, received_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_events_event
+    ON dashboard.webhook_events (event, received_at DESC);
+
+CREATE TABLE IF NOT EXISTS dashboard.otp_codes (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email       VARCHAR(255) NOT NULL,
+    code        VARCHAR(6) NOT NULL,
+    purpose     VARCHAR(20) NOT NULL CHECK (purpose IN ('password_reset', 'email_verify')),
+    expires_at  TIMESTAMPTZ NOT NULL,
+    used        BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_otp_email_purpose
+    ON dashboard.otp_codes (email, purpose, expires_at DESC);
 """
 
 
@@ -67,7 +94,7 @@ async def run_migration() -> None:
     conn: asyncpg.Connection = await asyncpg.connect(dsn=settings.database_url)
     try:
         await conn.execute(MIGRATION_SQL)
-        print("✅  dashboard.* schema applied successfully.")
+        print("dashboard.* schema applied successfully.")
     finally:
         await conn.close()
 
