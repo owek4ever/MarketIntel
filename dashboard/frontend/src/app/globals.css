@@ -837,18 +837,19 @@ label.form-label {
 /* Settings Overlay */
 .chat-settings-overlay {
   position: absolute;
-  top: 55px; /* height of header */
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(8, 10, 12, 0.95);
+  background: rgba(8, 10, 12, 0.97);
   backdrop-filter: blur(8px);
-  z-index: 10;
+  z-index: 20;
   padding: var(--sp-5);
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   animation: fade-in 0.18s ease-out;
+  overflow-y: auto;
 }
 
 .chat-settings-title {

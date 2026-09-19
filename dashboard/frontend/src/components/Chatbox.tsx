@@ -8,9 +8,6 @@ import {
   Settings,
   Minimize2,
   Trash2,
-  Lock,
-  User,
-  Globe,
 } from "lucide-react";
 
 interface Message {
@@ -26,14 +23,12 @@ export function Chatbox() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState("");
 
-  // n8n Webhook Settings
-  const [webhookUrl, setWebhookUrl] = useState(
-    "http://localhost:5678/webhook/marketintel-council"
+  // Settings
+  const [sessionId, setSessionId] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState(
+    "You are an AI Competitive Intelligence Analyst for MarketIntel. Help the user extract insights from competitor data."
   );
-  const [authUser, setAuthUser] = useState("");
-  const [authPass, setAuthPass] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -48,15 +43,11 @@ export function Chatbox() {
     }
     setSessionId(sid);
 
-    // Load custom webhook settings if configured
-    const savedUrl = localStorage.getItem("marketintel_chat_webhook_url");
-    const savedUser = localStorage.getItem("marketintel_chat_auth_user");
-    const savedPass = localStorage.getItem("marketintel_chat_auth_pass");
+    // Load custom settings if configured
     const savedHistory = localStorage.getItem("marketintel_chat_history");
+    const savedPrompt = localStorage.getItem("marketintel_chat_system_prompt");
 
-    if (savedUrl !== null) setWebhookUrl(savedUrl);
-    if (savedUser !== null) setAuthUser(savedUser);
-    if (savedPass !== null) setAuthPass(savedPass);
+    if (savedPrompt !== null) setSystemPrompt(savedPrompt);
     if (savedHistory) {
       try {
         const parsed = JSON.parse(savedHistory);
@@ -108,9 +99,7 @@ export function Chatbox() {
 
   const saveSettings = (e: FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("marketintel_chat_webhook_url", webhookUrl);
-    localStorage.setItem("marketintel_chat_auth_user", authUser);
-    localStorage.setItem("marketintel_chat_auth_pass", authPass);
+    localStorage.setItem("marketintel_chat_system_prompt", systemPrompt);
     setShowSettings(false);
   };
 
@@ -158,15 +147,7 @@ export function Chatbox() {
     setMessages((prev) => [...prev, newAssistantMessage]);
 
     try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      if (authUser && authPass) {
-        headers["Authorization"] = `Basic ${btoa(`${authUser}:${authPass}`)}`;
-      }
-
-      // Create session in backend first
+      // Create session in backend
       const sessionRes = await fetch("http://localhost:8000/api/v1/council/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -375,94 +356,65 @@ export function Chatbox() {
                 <Minimize2 size={14} />
               </button>
             </div>
-
-            {/* Settings Overlay */}
-            {showSettings && (
-              <form className="chat-settings-overlay" onSubmit={saveSettings}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <span className="chat-settings-title">n8n Integration</span>
-                  <button
-                    type="button"
-                    className="chat-header-btn"
-                    onClick={() => setShowSettings(false)}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-
-                <div className="chat-settings-field">
-                  <label className="form-label" style={{ margin: 0 }}>
-                    Chat Webhook URL
-                  </label>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <Globe size={13} color="var(--text-muted)" />
-                    <input
-                      type="url"
-                      required
-                      className="input"
-                      value={webhookUrl}
-                      onChange={(e) => setWebhookUrl(e.target.value)}
-                      placeholder="http://localhost:5678/webhook/..."
-                      style={{ fontSize: 11, padding: "6px 8px" }}
-                    />
-                  </div>
-                </div>
-
-                <div className="chat-settings-field">
-                  <label className="form-label" style={{ margin: 0 }}>
-                    Basic Auth Username
-                  </label>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <User size={13} color="var(--text-muted)" />
-                    <input
-                      type="text"
-                      className="input"
-                      value={authUser}
-                      onChange={(e) => setAuthUser(e.target.value)}
-                      placeholder="Optional username"
-                      style={{ fontSize: 11, padding: "6px 8px" }}
-                    />
-                  </div>
-                </div>
-
-                <div className="chat-settings-field">
-                  <label className="form-label" style={{ margin: 0 }}>
-                    Basic Auth Password
-                  </label>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <Lock size={13} color="var(--text-muted)" />
-                    <input
-                      type="password"
-                      className="input"
-                      value={authPass}
-                      onChange={(e) => setAuthPass(e.target.value)}
-                      placeholder="Optional password"
-                      style={{ fontSize: 11, padding: "6px 8px" }}
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{
-                    width: "100%",
-                    minHeight: 32,
-                    fontSize: 11,
-                    marginTop: 8,
-                  }}
-                >
-                  Save Connection Settings
-                </button>
-              </form>
-            )}
           </div>
+
+          {/* Settings Overlay */}
+          {showSettings && (
+            <form className="chat-settings-overlay" onSubmit={saveSettings}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span className="chat-settings-title">Chat Settings</span>
+                <button
+                  type="button"
+                  className="chat-header-btn"
+                  onClick={() => setShowSettings(false)}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+
+              <div className="chat-settings-field">
+                <label className="form-label" style={{ margin: 0 }}>
+                  System Prompt
+                </label>
+                <textarea
+                  className="input"
+                  rows={4}
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  placeholder="Instructions for the AI assistant..."
+                  style={{ fontSize: 11, padding: "6px 8px", resize: "vertical", fontFamily: "var(--font-mono)" }}
+                />
+              </div>
+
+              <div className="chat-settings-field">
+                <label className="form-label" style={{ margin: 0 }}>
+                  Session ID
+                </label>
+                <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                  {sessionId.slice(0, 8)}...
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{
+                  width: "100%",
+                  minHeight: 32,
+                  fontSize: 11,
+                  marginTop: 8,
+                }}
+              >
+                Save Settings
+              </button>
+            </form>
+          )}
 
           {/* Messages Area */}
           <div className="chat-messages">
