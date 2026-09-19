@@ -83,7 +83,7 @@ export default function RegisterPage() {
             </span>
           </button>
 
-          <div className="login-footnote">PFE2 · Intelligence Platform · v2.0</div>
+          <div className="login-footnote">MarketIntel · Intelligence Platform · v2.0</div>
         </div>
       </div>
     );
@@ -196,7 +196,7 @@ export default function RegisterPage() {
           </Link>
         </div>
 
-        <div className="login-footnote">PFE2 · Role: Analyst · v2.0</div>
+        <div className="login-footnote">MarketIntel · Role: Analyst · v2.0</div>
       </div>
     </div>
   );

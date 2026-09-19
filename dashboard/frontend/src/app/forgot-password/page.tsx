@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
             </span>
           </button>
 
-          <div className="login-footnote">PFE2 · Security Event · v2.0</div>
+          <div className="login-footnote">MarketIntel · Security Event · v2.0</div>
         </div>
       </div>
     );
@@ -275,7 +275,7 @@ export default function ForgotPasswordPage() {
             </button>
           </div>
 
-          <div className="login-footnote">PFE2 · Code expires in 10 min · v2.0</div>
+          <div className="login-footnote">MarketIntel · Code expires in 10 min · v2.0</div>
         </div>
       </div>
     );
@@ -355,7 +355,7 @@ export default function ForgotPasswordPage() {
           </Link>
         </div>
 
-        <div className="login-footnote">PFE2 · Intelligence Platform · v2.0</div>
+        <div className="login-footnote">MarketIntel · Intelligence Platform · v2.0</div>
       </div>
     </div>
   );

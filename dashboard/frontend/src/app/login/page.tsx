@@ -129,7 +129,7 @@ export default function LoginPage() {
           </button>
         </Link>
 
-        <div className="login-footnote">PFE2 · Intelligence Platform · v2.0</div>
+        <div className="login-footnote">MarketIntel · Intelligence Platform · v2.0</div>
       </div>
     </div>
   );

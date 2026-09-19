@@ -11,7 +11,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "PFE2 — Intelligence Command Center",
+  title: "MarketIntel — Intelligence Command Center",
   description: "Competitive intelligence command center",
 };
 

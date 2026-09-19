@@ -31,7 +31,7 @@ export function Sidebar() {
           <BarChart2 size={14} color="#000" strokeWidth={2.5} />
         </div>
         <div>
-          <div className="sidebar-brand-name">PFE2</div>
+          <div className="sidebar-brand-name">MarketIntel</div>
           <div className="sidebar-brand-sub">Intel Ops</div>
         </div>
       </div>

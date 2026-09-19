@@ -267,7 +267,7 @@ export function Chatbox() {
           msg.id === assistantMsgId
             ? {
                 ...msg,
-                content: `⚠️ Connection Error: Failed to connect to n8n.\n\nDetails: ${error?.message || "Could not connect to n8n workflow."}\n\nMake sure n8n is running on port 5678 and the PFE2 Council workflow is active.`,
+                content: `⚠️ Connection Error: Failed to connect to n8n.\n\nDetails: ${error?.message || "Could not connect to n8n workflow."}\n\nMake sure n8n is running on port 5678 and the MarketIntel Council workflow is active.`,
               }
             : msg
         )
