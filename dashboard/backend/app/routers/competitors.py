@@ -1,11 +1,92 @@
 """Competitors router."""
 
-from fastapi import APIRouter, Depends, Query
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from app.db.pool import acquire
 from app.dependencies import get_current_user
 
 router = APIRouter(prefix="/competitors", tags=["competitors"])
+
+SCRAPER_API = "http://localhost:8889/frontier/urls"
+
+
+class AddCompetitorRequest(BaseModel):
+    domain: str
+    name: str | None = None
+    scrape: bool = True  # auto-submit homepage to scraper
+
+
+def normalize_domain(domain: str) -> str:
+    """Strip protocol, www., and trailing slash."""
+    d = domain.strip().lower()
+    if d.startswith("https://"):
+        d = d[8:]
+    elif d.startswith("http://"):
+        d = d[7:]
+    if d.startswith("www."):
+        d = d[4:]
+    d = d.rstrip("/")
+    return d
+
+
+@router.post("")
+async def add_competitor(
+    body: AddCompetitorRequest,
+    user: dict = Depends(get_current_user),
+):
+    """Add a competitor and optionally start scraping their homepage."""
+    domain = normalize_domain(body.domain)
+    name = body.name or domain.split(".")[0].title()
+
+    async with acquire() as conn:
+        row = await conn.fetchrow(
+            """INSERT INTO competitors (domain, name)
+               VALUES ($1, $2)
+               ON CONFLICT (domain) DO UPDATE SET name = EXCLUDED.name
+               RETURNING id, domain, name, created_at""",
+            domain,
+            name,
+        )
+
+    competitor = dict(row)
+
+    # Submit homepage to scraper
+    if body.scrape:
+        homepage = f"https://www.{domain}/"
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.post(
+                    SCRAPER_API,
+                    json={
+                        "url": homepage,
+                        "job_type": "homepage_sitemap_crawl",
+                        "priority": 1,
+                    },
+                )
+                result = resp.json()
+                competitor["scrape_submitted"] = result.get("inserted", False)
+        except Exception as e:
+            competitor["scrape_submitted"] = False
+            competitor["scrape_error"] = str(e)
+
+    return competitor
+
+
+@router.delete("/{competitor_id}")
+async def delete_competitor(
+    competitor_id: int,
+    user: dict = Depends(get_current_user),
+):
+    """Delete a competitor and all associated data."""
+    async with acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM competitors WHERE id = $1", competitor_id
+        )
+    if result == "DELETE 0":
+        raise HTTPException(status_code=404, detail="Competitor not found")
+    return {"status": "deleted", "id": competitor_id}
 
 
 @router.get("")
