@@ -122,6 +122,105 @@ async def list_competitors(user: dict = Depends(get_current_user)):
     return [dict(r) for r in rows]
 
 
+@router.get("/compare")
+async def compare_competitors(
+    ids: str = Query(..., description="Comma-separated competitor IDs (max 5)"),
+    user: dict = Depends(get_current_user),
+):
+    """Side-by-side comparison of multiple competitors."""
+    id_list = [int(x.strip()) for x in ids.split(",") if x.strip()]
+    if len(id_list) < 2:
+        raise HTTPException(status_code=400, detail="Provide at least 2 competitor IDs")
+    if len(id_list) > 5:
+        raise HTTPException(status_code=400, detail="Maximum 5 competitors per comparison")
+
+    placeholders = ", ".join(f"${i+1}" for i in range(len(id_list)))
+
+    async with acquire() as conn:
+        competitors = await conn.fetch(
+            f"""
+            SELECT
+                c.id, c.domain, c.name,
+                cs.avg_seo_score, cs.avg_content_score, cs.avg_on_page_score,
+                cs.avg_technical_score, cs.avg_ux_score,
+                cps.avg_score AS perf_score, cps.total_pages,
+                cms.final_score AS market_score, cms.coverage_score,
+                cms.category_balance_score, cms.assortment_score,
+                COALESCE(css.score, 0) AS social_score,
+                (SELECT COUNT(*) FROM products pr WHERE pr.competitor_id = c.id) AS product_count,
+                (SELECT ROUND(AVG(pr.current_price)::numeric, 2) FROM products pr WHERE pr.competitor_id = c.id AND pr.current_price IS NOT NULL) AS avg_price,
+                (SELECT COUNT(*) FROM products pr WHERE pr.competitor_id = c.id AND pr.in_stock = true) AS in_stock_count
+            FROM competitors c
+            LEFT JOIN competitor_seo_summary cs ON cs.competitor_id = c.id
+            LEFT JOIN competitor_page_scores cps ON cps.competitor_id = c.id
+            LEFT JOIN competitor_market_scores cms ON cms.competitor_id = c.id
+            LEFT JOIN (
+                SELECT competitor_id, ROUND(AVG(score)::numeric, 4) AS score
+                FROM competitor_social_score GROUP BY competitor_id
+            ) css ON css.competitor_id = c.id
+            WHERE c.id IN ({placeholders})
+            """,
+            *id_list,
+        )
+
+        categories = await conn.fetch(
+            f"""
+            SELECT competitor_id, category, COUNT(*) as count
+            FROM products
+            WHERE competitor_id IN ({placeholders}) AND category IS NOT NULL
+            GROUP BY competitor_id, category
+            ORDER BY count DESC
+            """,
+            *id_list,
+        )
+
+        price_ranges = await conn.fetch(
+            f"""
+            SELECT competitor_id,
+                ROUND(MIN(current_price)::numeric, 2) AS min_price,
+                ROUND(MAX(current_price)::numeric, 2) AS max_price,
+                ROUND(AVG(current_price)::numeric, 2) AS avg_price,
+                COUNT(*) AS priced_products
+            FROM products
+            WHERE competitor_id IN ({placeholders}) AND current_price IS NOT NULL
+            GROUP BY competitor_id
+            """,
+            *id_list,
+        )
+
+        social_accounts = await conn.fetch(
+            f"""
+            SELECT sa.competitor_id, sa.platform, sa.follower_count, sa.is_verified
+            FROM social_accounts sa
+            WHERE sa.competitor_id IN ({placeholders})
+            ORDER BY sa.follower_count DESC
+            """,
+            *id_list,
+        )
+
+    comp_map = {dict(r)["id"]: dict(r) for r in competitors}
+
+    result = []
+    for cid in id_list:
+        c = comp_map.get(cid, {"id": cid, "name": "Unknown", "domain": "unknown"})
+        c["categories"] = [
+            {"category": r["category"], "count": r["count"]}
+            for r in categories if r["competitor_id"] == cid
+        ][:10]
+        pr = next((dict(r) for r in price_ranges if r["competitor_id"] == cid), None)
+        c["price_range"] = pr
+        c["social_accounts"] = [
+            {"platform": r["platform"], "followers": r["follower_count"], "verified": r["is_verified"]}
+            for r in social_accounts if r["competitor_id"] == cid
+        ]
+        scores = [c.get("avg_seo_score"), c.get("perf_score"), c.get("social_score"), c.get("market_score")]
+        valid_scores = [float(s) for s in scores if s is not None]
+        c["composite_score"] = round(sum(valid_scores) / len(valid_scores), 4) if valid_scores else None
+        result.append(c)
+
+    return result
+
+
 @router.get("/{competitor_id}")
 async def get_competitor(competitor_id: int, user: dict = Depends(get_current_user)):
     """Single competitor with all score dimensions."""

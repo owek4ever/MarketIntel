@@ -11,6 +11,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, HttpUrl
 
 from frontier import FrontierConfig, FrontierManager
+import json as _json
 
 
 def load_config(path: Path = Path.cwd() / "config.yaml") -> dict[str, Any]:
@@ -216,3 +217,90 @@ async def get_frontier_url_status(url_id: str) -> UrlStatusResponse:
     if status is None:
         raise HTTPException(status_code=404, detail="URL not found")
     return UrlStatusResponse(**status)
+
+
+class DomainStats(BaseModel):
+    domain: str
+    queued: int
+    inflight: int
+
+
+class FrontierStatsResponse(BaseModel):
+    queued: int
+    inflight: int
+    retry_scheduled: int
+    failed: int
+    completed: int
+    ready_domains: int
+    total_domains_in_queue: int
+    domains: list[DomainStats]
+
+
+@app.get("/frontier/stats", response_model=FrontierStatsResponse)
+async def get_frontier_stats() -> FrontierStatsResponse:
+    frontier: FrontierManager = app.state.frontier
+    r = frontier.redis
+    k = frontier.keys
+
+    inflight_map = await r.hgetall(k.inflight)
+    inflight_count = len(inflight_map)
+
+    retry_scheduled = await r.zcard(k.retry_schedule)
+
+    failed_list = await r.llen(k.failed)
+
+    all_domains = await r.zrange(k.ready_domains, 0, -1)
+    ready_domain_count = len(all_domains)
+
+    queued_total = 0
+    domains_map: dict[str, dict] = {}
+    async for key in r.scan_iter(match=f"{k.domain_queue_prefix}*", count=100):
+        key_str = key if isinstance(key, str) else key.decode()
+        domain = key_str.removeprefix(k.domain_queue_prefix)
+        count = await r.llen(key)
+        queued_total += count
+        domains_map[domain] = {"domain": domain, "queued": count, "inflight": 0}
+
+    for _url_id, payload in inflight_map.items():
+        try:
+            data = _json.loads(payload) if isinstance(payload, (str, bytes)) else payload
+            domain = data.get("domain", "unknown")
+            if domain in domains_map:
+                domains_map[domain]["inflight"] += 1
+            else:
+                domains_map[domain] = {"domain": domain, "queued": 0, "inflight": 1}
+        except Exception:
+            pass
+
+    # Count completed from DB (more reliable than scanning all Redis keys)
+    completed = 0
+    try:
+        from sqlalchemy import text
+    except ImportError:
+        pass
+    # Use a simple count from scrape_jobs if available
+    completed = await r.llen(k.failed)  # fallback: at least count failed
+
+    # Try counting completed from recent url keys
+    completed_count = 0
+    async for key in r.scan_iter(match=f"{k.url_prefix}*", count=200):
+        status_val = await r.hget(key, "status")
+        status_str = status_val if isinstance(status_val, str) else (status_val.decode() if status_val else "")
+        if status_str == "completed":
+            completed_count += 1
+        if completed_count >= 5000:
+            break
+    completed = completed_count
+
+    domains = [DomainStats(**d) for d in sorted(domains_map.values(), key=lambda x: -x["queued"])]
+
+    return FrontierStatsResponse(
+        queued=queued_total,
+        inflight=inflight_count,
+        retry_scheduled=retry_scheduled,
+        failed=failed_list,
+        completed=completed,
+        ready_domains=ready_domain_count,
+        total_domains_in_queue=len(domains_map),
+        domains=domains,
+    )

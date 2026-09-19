@@ -174,3 +174,52 @@ async def scraper_health(user: dict = Depends(get_current_user)):
     """Check if the existing scraper API is reachable."""
     alive = await scraper_client.scraper_health()
     return {"scraper_online": alive}
+
+
+@router.get("/stats")
+async def crawl_stats(user: dict = Depends(get_current_user)):
+    """Live frontier stats: queue depth, inflight, failures, per-domain breakdown."""
+    try:
+        return await scraper_client.frontier_stats()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=502, detail=f"Scraper error: {exc.response.text}")
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=503, detail=f"Scraper unreachable: {exc}")
+
+
+@router.get("/stats/aggregate")
+async def crawl_stats_aggregate(user: dict = Depends(get_current_user)):
+    """Aggregate scrape_jobs stats from the database."""
+    async with acquire() as conn:
+        row = await conn.fetchrow("""
+            SELECT
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status = 'completed') as completed,
+                COUNT(*) FILTER (WHERE status = 'queued') as queued,
+                COUNT(*) FILTER (WHERE status = 'inflight') as inflight,
+                COUNT(*) FILTER (WHERE status = 'failed') as failed,
+                COUNT(*) FILTER (WHERE status = 'retry_scheduled') as retry_scheduled,
+                COUNT(*) FILTER (WHERE finished_at IS NOT NULL AND finished_at > NOW() - INTERVAL '1 hour') as last_hour,
+                COUNT(*) FILTER (WHERE finished_at IS NOT NULL AND finished_at > NOW() - INTERVAL '24 hours') as last_24h,
+                AVG(EXTRACT(EPOCH FROM (finished_at - started_at))) FILTER (WHERE finished_at IS NOT NULL) as avg_duration_seconds
+            FROM scrape_jobs
+        """)
+        domains = await conn.fetch("""
+            SELECT domain,
+                COUNT(*) as total,
+                COUNT(*) FILTER (WHERE status = 'completed') as completed,
+                COUNT(*) FILTER (WHERE status = 'failed') as failed,
+                MAX(finished_at) as last_scraped
+            FROM scrape_jobs
+            GROUP BY domain ORDER BY total DESC LIMIT 50
+        """)
+        recent = await conn.fetch("""
+            SELECT id, url, domain, job_type, status, priority, queued_at, finished_at
+            FROM scrape_jobs
+            ORDER BY queued_at DESC LIMIT 20
+        """)
+    return {
+        "totals": dict(row) if row else {},
+        "domains": [dict(d) for d in domains],
+        "recent": [dict(r) for r in recent],
+    }

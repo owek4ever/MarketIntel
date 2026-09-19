@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import {
   BarChart2, Globe, TrendingUp, Zap, Share2,
   ShoppingBag, Activity, LogOut, FileText, Brain,
+  GitCompare,
 } from "lucide-react";
 
 const NAV = [
@@ -14,9 +15,10 @@ const NAV = [
   { href: "/dashboard/performance",  icon: Zap,          label: "Performance",        code: "04" },
   { href: "/dashboard/social",       icon: Share2,       label: "Social Media",       code: "05" },
   { href: "/dashboard/market",       icon: ShoppingBag,  label: "Market",             code: "06" },
-  { href: "/dashboard/crawl",        icon: Activity,     label: "Crawl Control",      code: "07" },
-  { href: "/dashboard/reports",      icon: FileText,     label: "Reports",            code: "08" },
-  { href: "/dashboard/council",      icon: Brain,        label: "Council",            code: "09" },
+  { href: "/dashboard/compare",      icon: GitCompare,   label: "Compare",            code: "07" },
+  { href: "/dashboard/crawl",        icon: Activity,     label: "Scraping",           code: "08" },
+  { href: "/dashboard/reports",      icon: FileText,     label: "Reports",            code: "09" },
+  { href: "/dashboard/council",      icon: Brain,        label: "Council",            code: "10" },
 ];
 
 export function Sidebar() {

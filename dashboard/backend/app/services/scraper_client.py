@@ -62,3 +62,9 @@ async def scraper_health() -> bool:
         return resp.status_code == 200
     except httpx.HTTPError:
         return False
+
+
+async def frontier_stats() -> dict:
+    resp = await get_scraper_client().get("/frontier/stats")
+    resp.raise_for_status()
+    return resp.json()

@@ -132,10 +132,18 @@ export const marketApi = {
 // --- Crawl ---
 export const crawlApi = {
   jobs: (params?: Record<string, unknown>) => api.get("/crawl/jobs", { params }),
+  stats: () => api.get("/crawl/stats"),
+  statsAggregate: () => api.get("/crawl/stats/aggregate"),
   triggerUrl: (url: string, priority = 5) =>
     api.post("/crawl/trigger", { url, priority }),
   scraperHealth: () => api.get("/crawl/scraper-health"),
   refreshViews: () => api.post("/crawl/refresh-views"),
+};
+
+// --- Competitor Comparison ---
+export const comparisonApi = {
+  compare: (ids: number[]) =>
+    api.get("/competitors/compare", { params: { ids: ids.join(",") } }),
 };
 
 // --- Reports ---
