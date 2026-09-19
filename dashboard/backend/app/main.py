@@ -54,4 +54,4 @@ app.include_router(council.router,     prefix=PREFIX)
 
 @app.get("/health", tags=["system"])
 async def health():
-    return {"status": "ok", "service": "pfe2-dashboard-backend"}
+    return {"status": "ok", "service": "marketintel-dashboard-backend"}

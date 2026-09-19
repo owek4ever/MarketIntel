@@ -24,7 +24,7 @@ In n8n: **Credentials** → **New** → **Postgres**
 |----------|--------------------------------------------|
 | Host     | `localhost` (or `host.docker.internal`)    |
 | Port     | `5432`                                     |
-| Database | `pfe2`                                     |
+| Database | `marketintel`                                 |
 | User     | `postgres`                                 |
 | Password | `ESPIN9A7BA`                               |
 | SSL      | disabled                                   |
@@ -65,7 +65,7 @@ Click **Activate** (toggle) on both workflows.
 ## Workflow Architecture
 
 ```
-Webhook (POST /webhook/pfe2-council)
+Webhook (POST /webhook/marketintel-council)
   └── Extract Vars (Set)
         └── Mark Running (Postgres)
               └── Branch on Domain (Switch)

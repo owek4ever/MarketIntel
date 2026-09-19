@@ -5,7 +5,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "pfe2-council",
+        "path": "marketintel-council",
         "authentication": "headerAuth",
         "responseMode": "onReceived",
         "options": {}
@@ -15,7 +15,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [240, 300],
-      "webhookId": "pfe2-council",
+      "webhookId": "marketintel-council",
       "credentials": {
         "httpHeaderAuth": {
           "id": "sZkmk2jEHi1LRPYB",
@@ -365,8 +365,8 @@
     "callerPolicy": "workflowsFromSameOwner",
     "errorWorkflow": ""
   },
-  "tags": [{ "name": "pfe2" }],
+  "tags": [{ "name": "marketintel" }],
   "_meta": {
-    "instanceId": "pfe2-council"
+    "instanceId": "marketintel-council"
   }
 }

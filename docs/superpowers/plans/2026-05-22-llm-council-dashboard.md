@@ -108,7 +108,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/council", tags=["council"])
 
-_COUNCIL_WEBHOOK_PATH = "/webhook/pfe2-council"
+_COUNCIL_WEBHOOK_PATH = "/webhook/marketintel-council"
 
 
 class CouncilSessionCreate(BaseModel):
@@ -1160,7 +1160,7 @@ In n8n: **New Workflow** → rename to `PFE2 Council`.
 
 - [ ] **Step 2: Add Webhook trigger**
 
-- Type: **Webhook**, HTTP Method: `POST`, Path: `pfe2-council`
+- Type: **Webhook**, HTTP Method: `POST`, Path: `marketintel-council`
 - Authentication: Header Auth, Header Name: `X-Api-Key`, Header Value: _(value of `N8N_API_KEY` from backend `.env`)_
 - Response Mode: **Immediately**
 

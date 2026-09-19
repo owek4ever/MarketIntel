@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-DB_URL = "postgresql://postgres:postgres@localhost:5432/pfe2"
+DB_URL = "postgresql://postgres:postgres@localhost:5432/marketintel"
 SCRAPER_API = "http://localhost:8889"
 SCRAPER_FRONTIER = f"{SCRAPER_API}/frontier/urls"
 pool = None

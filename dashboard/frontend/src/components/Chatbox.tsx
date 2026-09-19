@@ -30,7 +30,7 @@ export function Chatbox() {
 
   // n8n Webhook Settings
   const [webhookUrl, setWebhookUrl] = useState(
-    "http://localhost:5678/webhook/pfe2-council"
+    "http://localhost:5678/webhook/marketintel-council"
   );
   const [authUser, setAuthUser] = useState("");
   const [authPass, setAuthPass] = useState("");
@@ -41,18 +41,18 @@ export function Chatbox() {
   // Initialize session ID and load saved settings on mount
   useEffect(() => {
     // Session ID remains stable during page session
-    let sid = sessionStorage.getItem("pfe2_chat_session_id");
+    let sid = sessionStorage.getItem("marketintel_chat_session_id");
     if (!sid) {
       sid = crypto.randomUUID();
-      sessionStorage.setItem("pfe2_chat_session_id", sid);
+      sessionStorage.setItem("marketintel_chat_session_id", sid);
     }
     setSessionId(sid);
 
     // Load custom webhook settings if configured
-    const savedUrl = localStorage.getItem("pfe2_chat_webhook_url");
-    const savedUser = localStorage.getItem("pfe2_chat_auth_user");
-    const savedPass = localStorage.getItem("pfe2_chat_auth_pass");
-    const savedHistory = localStorage.getItem("pfe2_chat_history");
+    const savedUrl = localStorage.getItem("marketintel_chat_webhook_url");
+    const savedUser = localStorage.getItem("marketintel_chat_auth_user");
+    const savedPass = localStorage.getItem("marketintel_chat_auth_pass");
+    const savedHistory = localStorage.getItem("marketintel_chat_history");
 
     if (savedUrl !== null) setWebhookUrl(savedUrl);
     if (savedUser !== null) setAuthUser(savedUser);
@@ -86,7 +86,7 @@ export function Chatbox() {
   // Save messages to localstorage when they change
   useEffect(() => {
     if (messages.length > 0) {
-      localStorage.setItem("pfe2_chat_history", JSON.stringify(messages));
+      localStorage.setItem("marketintel_chat_history", JSON.stringify(messages));
     }
   }, [messages]);
 
@@ -108,9 +108,9 @@ export function Chatbox() {
 
   const saveSettings = (e: FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("pfe2_chat_webhook_url", webhookUrl);
-    localStorage.setItem("pfe2_chat_auth_user", authUser);
-    localStorage.setItem("pfe2_chat_auth_pass", authPass);
+    localStorage.setItem("marketintel_chat_webhook_url", webhookUrl);
+    localStorage.setItem("marketintel_chat_auth_user", authUser);
+    localStorage.setItem("marketintel_chat_auth_pass", authPass);
     setShowSettings(false);
   };
 
@@ -124,10 +124,10 @@ export function Chatbox() {
         timestamp: new Date(),
       };
       setMessages([welcome]);
-      localStorage.removeItem("pfe2_chat_history");
+      localStorage.removeItem("marketintel_chat_history");
       // Cycle session ID on clear
       const sid = crypto.randomUUID();
-      sessionStorage.setItem("pfe2_chat_session_id", sid);
+      sessionStorage.setItem("marketintel_chat_session_id", sid);
       setSessionId(sid);
     }
   };

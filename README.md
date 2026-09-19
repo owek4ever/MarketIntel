@@ -137,7 +137,7 @@ uv run python main.py
 \`\`\`
 
 ### 4️⃣ n8n Workflows
-Import `PFE_*.json`, `n8n/PFE_council_workflow.json`, and `docs/n8n/pfe2_council_*.json`, then follow [`docs/n8n/pfe2_council_setup.md`](docs/n8n/pfe2_council_setup.md) — use your own credentials.
+Import `PFE_*.json`, `n8n/PFE_council_workflow.json`, and `docs/n8n/marketintel_council_*.json`, then follow [`docs/n8n/marketintel_council_setup.md`](docs/n8n/marketintel_council_setup.md) — use your own credentials.
 
 ### 5️⃣ Dashboard Backend
 \`\`\`bash

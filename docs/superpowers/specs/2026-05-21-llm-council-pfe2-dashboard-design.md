@@ -169,7 +169,7 @@ A new standalone workflow. Does not modify any existing workflow.
 ### 5.1 Node sequence
 
 ```
-1.  Webhook (POST /pfe2-council)
+1.  Webhook (POST /marketintel-council)
     Receives: {session_id, question, domain_profile, competitor_id}
 
 2.  Switch on domain_profile:
@@ -372,7 +372,7 @@ New route `/council` added to the Next.js sidebar nav.
 Add to `dashboard/backend/.env` and `.env.example`:
 
 ```
-N8N_COUNCIL_WEBHOOK_URL=http://localhost:5678/webhook/pfe2-council
+N8N_COUNCIL_WEBHOOK_URL=http://localhost:5678/webhook/marketintel-council
 ```
 
 No callback secret is needed — n8n writes directly to the DB, there is no HTTP callback from n8n to FastAPI.

@@ -119,7 +119,7 @@ export default function RegisterPage() {
               autoComplete="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="operator@pfe2.local"
+              placeholder="operator@marketintel.com"
               required
             />
           </div>
