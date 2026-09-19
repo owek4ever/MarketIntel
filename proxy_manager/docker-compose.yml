@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: proxy-redis
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+    volumes:
+      - proxy_redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+
   proxy_manager:
     build: .
     container_name: proxy_manager
@@ -9,13 +19,16 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=12345678  # Use your redis config password
-      - N8N_PROXY_URL=http://n8n:5678/webhook/proxies
+      - REDIS_PASSWORD=
+      - N8N_PROXY_URL=http://localhost:5678/webhook/proxies
       - PROXY_HOST=0.0.0.0
       - PROXY_PORT=8888
       - HOURLY_LIMIT=50
       - DAILY_LIMIT=500
-      - SYNC_INTERVAL_SECONDS=300
+      - SYNC_INTERVAL_DAYS=1
     depends_on:
       - redis
     restart: unless-stopped
+
+volumes:
+  proxy_redis_data:

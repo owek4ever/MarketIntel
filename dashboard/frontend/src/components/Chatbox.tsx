@@ -30,10 +30,10 @@ export function Chatbox() {
 
   // n8n Webhook Settings
   const [webhookUrl, setWebhookUrl] = useState(
-    "http://localhost:5678/webhook/67e90123-ad0f-46a5-9cce-a2b18107e9b2/chat"
+    "http://localhost:5678/webhook/pfe2-council"
   );
-  const [authUser, setAuthUser] = useState("test");
-  const [authPass, setAuthPass] = useState("test");
+  const [authUser, setAuthUser] = useState("");
+  const [authPass, setAuthPass] = useState("");
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -166,93 +166,100 @@ export function Chatbox() {
         headers["Authorization"] = `Basic ${btoa(`${authUser}:${authPass}`)}`;
       }
 
-      const response = await fetch(webhookUrl, {
+      // Create session in backend first
+      const sessionRes = await fetch("http://localhost:8000/api/v1/council/chat", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "sendMessage",
-          message: userMessage.content,
-          chatInput: userMessage.content,
-          sessionId: sessionId,
+          question: userMessage.content,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+      if (!sessionRes.ok) {
+        const errBody = await sessionRes.text();
+        throw new Error(`Failed to create session: ${sessionRes.status} ${errBody}`);
       }
 
-      if (!response.body) {
-        throw new Error("Response body is not readable.");
-      }
+      const sessionData = await sessionRes.json();
+      const councilSessionId = sessionData.session_id;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
+      // Workflow started async — poll the backend for the result
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMsgId
+            ? { ...msg, content: "⏳ Processing your question..." }
+            : msg
+        )
+      );
 
-      const contentType = response.headers.get("Content-Type") || "";
-      const isSSE = contentType.includes("event-stream");
+      const maxAttempts = 60;
+      const pollInterval = 2000;
+      let attempt = 0;
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      while (attempt < maxAttempts) {
+        await new Promise((r) => setTimeout(r, pollInterval));
+        attempt++;
 
-        const chunkText = decoder.decode(value, { stream: true });
-        
-        if (isSSE || chunkText.includes("data:")) {
-          buffer += chunkText;
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+        try {
+          const pollRes = await fetch(
+            `http://localhost:8000/api/v1/council/sessions/${councilSessionId}/status`,
+            { headers: { "Content-Type": "application/json" } }
+          );
 
-          for (const line of lines) {
-            const cleanLine = line.trim();
-            if (!cleanLine) continue;
+          if (!pollRes.ok) continue;
 
-            if (cleanLine.startsWith("data:")) {
-              const dataContent = cleanLine.slice(5).trim();
-              if (dataContent === "[DONE]") continue;
+          const session = await pollRes.json();
+          const status = session.status ?? session.data?.status;
 
-              try {
-                const parsed = JSON.parse(dataContent);
-                const textChunk =
-                  parsed.text ??
-                  parsed.chunk ??
-                  parsed.message ??
-                  parsed.output ??
-                  parsed.response ??
-                  "";
-                
-                if (textChunk) {
-                  setMessages((prev) =>
-                    prev.map((msg) =>
-                      msg.id === assistantMsgId
-                        ? { ...msg, content: msg.content + textChunk }
-                        : msg
-                    )
-                  );
-                }
-              } catch {
-                // If it is SSE but not valid JSON, treat it as raw text chunk
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMsgId
-                      ? { ...msg, content: msg.content + dataContent }
-                      : msg
-                  )
-                );
-              }
+          if (status === "completed") {
+            const report =
+              session.html_report ??
+              session.data?.html_report ??
+              session.advisor_responses ??
+              session.data?.advisor_responses;
+
+            let content = "";
+            if (typeof report === "string" && report.includes("<!DOCTYPE")) {
+              content = "✅ Report generated! Open it in a new tab to view the full analysis.";
+            } else if (report) {
+              content =
+                typeof report === "string"
+                  ? report
+                  : "```json\n" + JSON.stringify(report, null, 2) + "\n```";
+            } else {
+              content = "✅ Council analysis completed. No report content found.";
             }
+
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMsgId ? { ...msg, content } : msg
+              )
+            );
+            return;
           }
-        } else {
-          // If not SSE, append the raw chunk text
+
+          if (status === "failed") {
+            const errMsg =
+              session.error_message ?? session.data?.error_message ?? "Unknown error";
+            throw new Error(`Council analysis failed: ${errMsg}`);
+          }
+
+          // Still running — update progress
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === assistantMsgId
-                ? { ...msg, content: msg.content + chunkText }
+                ? { ...msg, content: `⏳ Processing... (attempt ${attempt}/${maxAttempts})` }
                 : msg
             )
           );
+        } catch (pollErr: any) {
+          if (pollErr.message?.startsWith("Council analysis failed")) throw pollErr;
+          // Network error on poll — keep trying
         }
       }
+
+      throw new Error("Timed out waiting for council analysis to complete.");
+
     } catch (error: any) {
       console.error("Streaming error:", error);
       setMessages((prev) =>
@@ -260,7 +267,7 @@ export function Chatbox() {
           msg.id === assistantMsgId
             ? {
                 ...msg,
-                content: `⚠️ Connection Error: Failed to receive stream from agent.\n\nDetails: ${error?.message || "Could not connect to n8n workflow."}\n\nMake sure n8n is running locally on port 5678 and CORS/basic credentials are correct in Settings.`,
+                content: `⚠️ Connection Error: Failed to connect to n8n.\n\nDetails: ${error?.message || "Could not connect to n8n workflow."}\n\nMake sure n8n is running on port 5678 and the PFE2 Council workflow is active.`,
               }
             : msg
         )

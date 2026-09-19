@@ -30,14 +30,14 @@ browser:
   locale: "fr-TN"
   user_data_dir: null
   disable_images: true
-  proxy: http://localhost:8888 # "http://user:pass@host:port"
+  proxy: null # "http://user:pass@host:port"
 
 webhook:
-  scrape_started_url: http://192.168.1.222:5678/webhook/scrape_started # "https://your-n8n-instance/webhook/scrape-result"
-  crawl_result_url: http://192.168.1.222:5678/webhook/crawl_result # "https://your-n8n-instance/webhook/scrape-result"
-  product_list_scrape_result_url: http://192.168.1.222:5678/webhook/product_list_scrape_result # "https://your-n8n-instance/webhook/scrape-result"
-  product_scrape_result_url: http://192.168.1.222:5678/webhook/product_scrape_result # "https://your-n8n-instance/webhook/scrape-result"
-  content_scrape_result_url: http://192.168.1.222:5678/webhook/content_scrape_result # "https://your-n8n-instance/webhook/scrape-result"
+  scrape_started_url: http://localhost:5680/webhook/scrape_started
+  crawl_result_url: http://localhost:5680/webhook/crawl_result
+  product_list_scrape_result_url: http://localhost:5680/webhook/product_list_scrape_result
+  product_scrape_result_url: http://localhost:5680/webhook/product_scrape_result
+  content_scrape_result_url: http://localhost:5680/webhook/content_scrape_result
   timeout_seconds: 10
   authorization_header_name: "x-api-key"
   authorization_header_value: "21ZCKkMVXoH1lhW7w2lg66iYja8EtRFW5qEZRoMIa55OmiBokLQgdNde4MpscjoS"

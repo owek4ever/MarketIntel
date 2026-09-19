@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     scraper_api_base_url: str = "http://localhost:8888"
     n8n_webhook_base_url: str = "http://localhost:5678"
     n8n_api_key: str = ""
+    openrouter_api_key: str = ""
     # Public URL of this dashboard backend (used as webhook callback for n8n)
     dashboard_public_url: str = "http://localhost:8000"
 
