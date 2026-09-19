@@ -170,6 +170,14 @@ async def handle_product_list(request: Request):
 
     # Products are URLs (strings) — submit them for detail extraction
     product_urls = [p for p in products if isinstance(p, str) and p.startswith("http")]
+    if not product_urls and products:
+        # Products might be dicts with url/title fields
+        product_urls = [p.get("url", "") for p in products if isinstance(p, dict) and p.get("url", "").startswith("http")]
+    if not product_urls and products:
+        # Products might be dicts with href fields
+        product_urls = [p.get("href", "") for p in products if isinstance(p, dict) and p.get("href", "").startswith("http")]
+    if not product_urls and products:
+        logger.warning("Product list returned %d items but none have http URLs. First item type: %s, value: %s", len(products), type(products[0]).__name__, str(products[0])[:200])
     if product_urls:
         n = await submit_to_frontier(product_urls[:100], "extract_product_detail", priority=2)
         logger.info("Submitted %d product URLs for detail extraction", n)

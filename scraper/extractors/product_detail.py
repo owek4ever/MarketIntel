@@ -59,6 +59,9 @@ def _extract_offer_fields(offers: Any) -> Dict[str, Optional[str]]:
     availability = offers.get("availability")
     offer_url = offers.get("url")
 
+    if isinstance(availability, list) and availability:
+        availability = availability[0]
+
     return {
         "price": _clean_text(str(price)) if price else None,
         "currency": _clean_text(str(currency)) if currency else None,
@@ -200,7 +203,10 @@ async def extract_product_detail(
             )
 
     if availability:
-        availability = availability.split("/")[-1]
+        if isinstance(availability, list):
+            availability = availability[0] if availability else None
+        if isinstance(availability, str):
+            availability = availability.split("/")[-1]
 
     # Normalize URLs
     images = [normalize_url(img, url) or img for img in images]
@@ -211,10 +217,11 @@ async def extract_product_detail(
     product_element = None
 
     selectors = [
-        ('img', page.locator(f'img[src="{images[0]}"]')),
         ('h1', page.locator('h1')),
         ('main', page.locator("main"))
     ]
+    if images and images[0]:
+        selectors.insert(0, ('img', page.locator(f'img[src="{images[0]}"]')))
 
     for name, locator in selectors:
         count = await locator.count()
@@ -289,17 +296,31 @@ async def extract_product_detail(
         # ---- href case ----
         href = await el.get_attribute("href")
         if href and href.startswith("#"):
-            target = page.locator(href)
+            try:
+                target = page.locator(f'css={href}')
+            except Exception:
+                target = None
 
         # ---- aria-controls case ----
         elif await el.get_attribute("aria-controls"):
             target_id = await el.get_attribute("aria-controls")
-            target = page.locator(f"#{target_id}")
+            try:
+                target = page.locator(f'css=#{target_id}')
+            except Exception:
+                target = None
 
         text_nodes = []
         md = None
 
-        if target and await target.count() > 0:
+        if target:
+            try:
+                target_count = await target.count()
+            except Exception:
+                target_count = 0
+        else:
+            target_count = 0
+
+        if target and target_count > 0:
             # text_nodes = target.locator(CONTENT_SELECTORS)
             md = MarkdownConverter().convert(await target.inner_html())
         else:

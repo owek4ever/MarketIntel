@@ -32,6 +32,7 @@ _PRODUCT_PATTERNS = [
     r"[a-zA-Z][a-zA-Z0-9-]+-\d+\.html$",   # PrestaShop: slug-ID.html
     r"[?&](?:id|pid|product_id|item_id)=\d+",
     r"/product/[0-9\w-]+/?$",                    # WooCommerce
+    r"/\w+/[a-zA-Z0-9-]+-[A-Z0-9]{6,}/?$",      # Drest-style: /category/slug-SKU/
 ]
 
 _BLOG_PATTERNS = [

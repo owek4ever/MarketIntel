@@ -7,7 +7,7 @@ redis:
   working_queue: "scraper:jobs:working"
   dead_letter_queue: "scraper:jobs:dlq"
   max_retries: 3
-  timeout_seconds: 600 # Job visibility timeout
+  timeout_seconds: 60 # Job visibility timeout
 
 worker:
   concurrency: 3
@@ -21,7 +21,7 @@ frontier:
   retry_backoff_multiplier: 2.0
   max_retry_delay_seconds: 300
   retry_promotion_batch_size: 100
-  max_jobs_per_domain: 30
+  max_jobs_per_domain: 50
   inflight_timeout_seconds: 10
   seen_urls_ttl_seconds: 259200
 
