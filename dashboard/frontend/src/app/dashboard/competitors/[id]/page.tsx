@@ -1,16 +1,21 @@
 "use client";
 import useSWR from "swr";
 import { useParams } from "next/navigation";
-import { competitorsApi } from "@/lib/api";
+import { competitorsApi, socialApi } from "@/lib/api";
 import { useState } from "react";
 import React from "react";
-import { Globe, FileText, ShoppingBag, LayoutDashboard, TrendingUp, Download } from "lucide-react";
+import { Globe, FileText, ShoppingBag, LayoutDashboard, TrendingUp, Download, Share2 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { marketApi } from "@/lib/api";
 
 const fetcher = (id: number) => competitorsApi.get(id).then(r => r.data);
 const pagesFetcher = (id: number, page: number) => competitorsApi.pages(id, page).then(r => r.data);
 const productsFetcher = (id: number, page: number) => competitorsApi.products(id, page).then(r => r.data);
+const socialSummaryFetcher = (id: number) => socialApi.summary().then(r => (r.data ?? []).filter((s: any) => s.competitor_id === id));
+
+const PLATFORM_COLORS: Record<string, string> = {
+  facebook: "var(--info)", instagram: "#ec4899", tiktok: "var(--success)",
+};
 
 export default function CompetitorDetailPage() {
   const params = useParams();
@@ -44,14 +49,16 @@ export default function CompetitorDetailPage() {
         </button>
       </div>
 
-      {tab === "overview" && <OverviewTab data={data} />}
+      {tab === "overview" && <OverviewTab data={data} id={id} />}
       {tab === "pages" && <PagesTab id={id} />}
       {tab === "products" && <ProductsTab id={id} />}
     </div>
   );
 }
 
-function OverviewTab({ data }: { data: any }) {
+function OverviewTab({ data, id }: { data: any; id: number }) {
+  const { data: socialData } = useSWR(["competitor-social", id], () => socialSummaryFetcher(id));
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
       <div className="card">
@@ -71,6 +78,24 @@ function OverviewTab({ data }: { data: any }) {
           <ScoreRow label="Market Score" value={data.market_score} />
           <ScoreRow label="Coverage Score" value={data.coverage_score} />
           <ScoreRow label="Availability Score" value={data.availability_score} />
+        </div>
+      </div>
+      <div className="card">
+        <h2 style={{ margin: "0 0 1rem", fontSize: "0.95rem", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+          <Share2 size={14} /> Social Media
+        </h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+          {socialData?.length > 0 ? socialData.map((s: any, i: number) => {
+            const color = PLATFORM_COLORS[s.platform] ?? "var(--text-secondary)";
+            return (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span className="badge" style={{ background: "transparent", color, border: `1px solid ${color}`, fontSize: 10 }}>{s.platform}</span>
+                <span style={{ fontWeight: 600, color: "var(--accent)" }}>{(parseFloat(s.score) * 100).toFixed(1)}%</span>
+              </div>
+            );
+          }) : (
+            <span style={{ color: "var(--text-muted)", fontSize: 12 }}>No social accounts tracked</span>
+          )}
         </div>
       </div>
     </div>

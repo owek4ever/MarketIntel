@@ -115,6 +115,8 @@ export const socialApi = {
   posts: (id: number, platform?: string, limit = 20) =>
     api.get(`/social/posts/${id}`, { params: { limit, ...(platform ? { platform } : {}) } }),
   accounts: (id: number) => api.get(`/social/accounts/${id}`),
+  aiAnalysis: (id: number, platform?: string) =>
+    api.get(`/social/ai-analysis/${id}`, { params: platform ? { platform } : {} }),
 };
 
 // --- Market ---
