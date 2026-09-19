@@ -4,6 +4,7 @@ import requests
 def make_request(url, headers: dict, timeout: int, method: str = "get", **kwargs):
     try:
         kwargs.setdefault('stream', True)
+        kwargs.setdefault('verify', False)
         start_time = datetime.now()
         response = requests.request(method, url, headers=headers, timeout=timeout, **kwargs)
         end_time = datetime.now()
@@ -15,6 +16,6 @@ def make_request(url, headers: dict, timeout: int, method: str = "get", **kwargs
 
 def get_asset_response(asset_url: str, headers: dict, timeout: int):
     try:
-        return requests.get(asset_url, headers=headers, timeout=timeout, allow_redirects=True)
+        return requests.get(asset_url, headers=headers, timeout=timeout, allow_redirects=True, verify=False)
     except requests.exceptions.RequestException:
         return None

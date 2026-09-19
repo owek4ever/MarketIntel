@@ -63,7 +63,7 @@ def check_images(soup: BeautifulSoup, base_url: str, headers: dict, request_time
             if src and not src.startswith(('data:', 'blob:')):
                 full_img_url = urljoin(base_url, src)
                 try:
-                    response = requests.head(full_img_url, timeout=request_timeout / 2, allow_redirects=True, headers=headers)
+                    response = requests.head(full_img_url, timeout=request_timeout / 2, allow_redirects=True, headers=headers, verify=False)
                     if response.status_code >= 400:
                         broken_images_details.append({"url": full_img_url, "status_code": response.status_code})
                 except requests.exceptions.Timeout:
@@ -148,7 +148,7 @@ def check_links(soup: BeautifulSoup, base_url: str, headers: dict, request_timeo
         print(f"Actively checking up to {len(links_to_actively_check)} links for broken status (total on page: {len(all_discovered_links)})...")
         for link_url_to_check in links_to_actively_check:
             try:
-                response = requests.head(link_url_to_check, timeout=request_timeout / 2, allow_redirects=True, headers=headers)
+                response = requests.head(link_url_to_check, timeout=request_timeout / 2, allow_redirects=True, headers=headers, verify=False)
                 if response.status_code >= 400:
                     broken_links_details.append({"url": link_url_to_check, "status_code": response.status_code})
             except requests.exceptions.Timeout:
